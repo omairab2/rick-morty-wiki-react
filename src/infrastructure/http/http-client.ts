@@ -1,21 +1,9 @@
 import { env } from '@/shared/config/env';
+import { HttpError } from '@/shared/errors/http.error';
 
 interface GetRequest {
   path: string;
   signal?: AbortSignal;
-}
-
-/**
- * Error thrown when an HTTP request resolves with a non-2xx status.
- */
-export class HttpError extends Error {
-  readonly status: number;
-
-  constructor(status: number, message: string) {
-    super(message);
-    this.name = 'HttpError';
-    this.status = status;
-  }
 }
 
 async function get<TResponse>({ path, signal }: GetRequest): Promise<TResponse> {

@@ -11,7 +11,7 @@ import type {
   CharacterRepository,
   GetEpisodesByIdsQuery,
 } from '@/core/domain/repositories/character.repository';
-import { HttpError } from '@/infrastructure/http/http-client';
+import { HttpError } from '@/shared/errors/http.error';
 
 const CHARACTER: Character = {
   id: 1,

@@ -143,3 +143,5 @@ querystring (filtros de personajes, paginación, búsqueda), en vez de manejar
 
 - [ADR 002: Lazy route splitting](002-lazy-route-splitting.md) — code splitting por
   ruta con `React.lazy` + `Suspense` para reducir el bundle inicial.
+- [ADR 003: HttpError en la capa shared](003-http-error-in-shared-layer.md) — mueve
+  `HttpError` a `shared/errors/` para eliminar el acoplamiento `presentation → infrastructure`.

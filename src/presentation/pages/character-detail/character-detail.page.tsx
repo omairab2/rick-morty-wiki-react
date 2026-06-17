@@ -6,7 +6,7 @@ import { CharacterDetailView } from '@/presentation/components/character/charact
 import { NotFoundState } from '@/presentation/components/character/not-found-state';
 import { ErrorState } from '@/presentation/components/error-state';
 import { QueryErrorBoundary } from '@/presentation/components/query-error-boundary';
-import { HttpError } from '@/infrastructure/http/http-client';
+import { HttpError } from '@/shared/errors/http.error';
 import { useCharacterDetail } from '@/presentation/hooks/use-character-detail.hook';
 import { AppPath } from '@/presentation/routes/paths';
 

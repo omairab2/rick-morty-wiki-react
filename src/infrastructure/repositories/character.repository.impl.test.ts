@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CharacterStatus } from '@/core/domain/entities/character.entity';
 import { rickMortyClient } from '@/infrastructure/api/rick-morty.client';
-import { HttpError } from '@/infrastructure/http/http-client';
+import { HttpError } from '@/shared/errors/http.error';
 import { characterNotFoundHandler } from '@/infrastructure/mocks/handlers';
 import { server } from '@/infrastructure/mocks/server';
 import { createCharacterRepository } from '@/infrastructure/repositories/character.repository.impl';
