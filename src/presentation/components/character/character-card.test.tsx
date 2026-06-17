@@ -18,7 +18,8 @@ const CHARACTER: Character = {
   origin: { name: 'Earth (C-137)', url: '' },
   location: { name: 'Citadel of Ricks', url: '' },
   imageUrl: 'https://example.com/rick.png',
-  episodeCount: 51,
+  episodeCount: 3,
+  episodeIds: [1, 2, 3],
 };
 
 describe('CharacterCard', () => {

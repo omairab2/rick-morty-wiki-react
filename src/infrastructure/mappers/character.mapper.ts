@@ -36,6 +36,14 @@ function toCharacterGender(value: string): CharacterGender {
 }
 
 /**
+ * Extract the trailing numeric id from a resource URL
+ * (e.g. ".../episode/42" → 42). Invalid segments yield `NaN`.
+ */
+function extractIdFromUrl(url: string): number {
+  return Number.parseInt(url.split('/').pop() ?? '', 10);
+}
+
+/**
  * Map a raw API character DTO to the domain entity.
  */
 export function mapCharacter(dto: CharacterApiDto): Character {
@@ -50,6 +58,7 @@ export function mapCharacter(dto: CharacterApiDto): Character {
     location: { name: dto.location.name, url: dto.location.url },
     imageUrl: dto.image,
     episodeCount: dto.episode.length,
+    episodeIds: dto.episode.map(extractIdFromUrl).filter((id) => !Number.isNaN(id)),
   };
 }
 

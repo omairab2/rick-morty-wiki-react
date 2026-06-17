@@ -1,12 +1,18 @@
 import type { GetCharactersRequestDto } from '@/application/dto/character.dto';
+import { normalizeEpisodesResponse } from '@/application/dto/episode.dto';
+import type { Character } from '@/core/domain/entities/character.entity';
+import type { Episode } from '@/core/domain/entities/episode.entity';
 import type {
   CharacterFilters,
   CharacterPage,
   CharacterRepository,
+  GetCharacterByIdQuery,
   GetCharactersQuery,
+  GetEpisodesByIdsQuery,
 } from '@/core/domain/repositories/character.repository';
 import { rickMortyClient } from '@/infrastructure/api/rick-morty.client';
-import { mapCharacterPage } from '@/infrastructure/mappers/character.mapper';
+import { mapCharacter, mapCharacterPage } from '@/infrastructure/mappers/character.mapper';
+import { mapEpisode } from '@/infrastructure/mappers/episode.mapper';
 
 interface ToRequestDtoArgs {
   page: number;
@@ -39,6 +45,7 @@ function toRequestDto({ page, filters }: ToRequestDtoArgs): GetCharactersRequest
 /**
  * Concrete {@link CharacterRepository} backed by the Rick & Morty API. Forwards
  * the abort `signal` end-to-end so TanStack Query can cancel in-flight requests.
+ * HTTP errors (e.g. a 404 from `/character/:id`) propagate unchanged.
  */
 export function createCharacterRepository(): CharacterRepository {
   return {
@@ -47,6 +54,22 @@ export function createCharacterRepository(): CharacterRepository {
       const response = await rickMortyClient.fetchCharacters({ request, signal });
 
       return mapCharacterPage({ dto: response, requestedPage: page });
+    },
+
+    async getCharacterById({ id, signal }: GetCharacterByIdQuery): Promise<Character> {
+      const dto = await rickMortyClient.fetchCharacterById({ id, signal });
+
+      return mapCharacter(dto);
+    },
+
+    async getEpisodesByIds({ ids, signal }: GetEpisodesByIdsQuery): Promise<Episode[]> {
+      if (ids.length === 0) {
+        return [];
+      }
+
+      const response = await rickMortyClient.fetchEpisodesByIds({ ids, signal });
+
+      return normalizeEpisodesResponse(response).map(mapEpisode);
     },
   };
 }

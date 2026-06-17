@@ -24,6 +24,12 @@ function setup() {
       queries.push(query);
       return Promise.resolve(EMPTY_PAGE);
     },
+    getCharacterById: () => {
+      throw new Error('Not exercised by the get-characters use case.');
+    },
+    getEpisodesByIds: () => {
+      throw new Error('Not exercised by the get-characters use case.');
+    },
   };
 
   return { useCase: createGetCharactersUseCase({ repository }), queries };

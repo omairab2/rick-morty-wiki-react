@@ -17,6 +17,13 @@ const NotFoundPage = lazy(() =>
     default: module.NotFoundPage,
   })),
 );
+const CharacterDetailPage = lazy(() =>
+  import('@/presentation/pages/character-detail/character-detail.page').then((module) => ({
+    default: module.CharacterDetailPage,
+  })),
+);
+
+const CHARACTER_DETAIL_ROUTE = 'characters/:id';
 
 const router = createBrowserRouter([
   {
@@ -24,6 +31,7 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: CHARACTER_DETAIL_ROUTE, element: <CharacterDetailPage /> },
       { path: CATCH_ALL_PATH, element: <NotFoundPage /> },
     ],
   },

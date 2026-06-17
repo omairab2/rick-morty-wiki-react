@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
 import { characterNotFoundHandler, characterSuccessHandler } from '@/infrastructure/mocks/handlers';
@@ -19,9 +20,11 @@ function renderHomePage(searchParams = '') {
 
   return render(<HomePage />, {
     wrapper: ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter searchParams={searchParams}>{children}</NuqsTestingAdapter>
-      </QueryClientProvider>
+      <MemoryRouter initialEntries={[`/${searchParams}`]}>
+        <QueryClientProvider client={queryClient}>
+          <NuqsTestingAdapter searchParams={searchParams}>{children}</NuqsTestingAdapter>
+        </QueryClientProvider>
+      </MemoryRouter>
     ),
   });
 }

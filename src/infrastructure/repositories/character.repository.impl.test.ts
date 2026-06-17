@@ -1,7 +1,8 @@
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { CharacterStatus } from '@/core/domain/entities/character.entity';
+import { rickMortyClient } from '@/infrastructure/api/rick-morty.client';
 import { HttpError } from '@/infrastructure/http/http-client';
 import { characterNotFoundHandler } from '@/infrastructure/mocks/handlers';
 import { server } from '@/infrastructure/mocks/server';
@@ -11,7 +12,7 @@ import { env } from '@/shared/config/env';
 const CHARACTER_ENDPOINT = `${env.apiBaseUrl}/character`;
 const EMPTY_RESPONSE = { info: { count: 0, pages: 0, next: null, prev: null }, results: [] };
 
-describe('createCharacterRepository', () => {
+describe('createCharacterRepository · getCharacters', () => {
   it('maps a successful API response to a domain CharacterPage', async () => {
     const repository = createCharacterRepository();
 
@@ -74,5 +75,58 @@ describe('createCharacterRepository', () => {
     await expect(
       repository.getCharacters({ page: 1, filters: {}, signal: controller.signal }),
     ).rejects.toThrow();
+  });
+});
+
+describe('createCharacterRepository · getCharacterById', () => {
+  it('fetches a character by id and maps it to the domain', async () => {
+    const repository = createCharacterRepository();
+
+    const character = await repository.getCharacterById({ id: 1 });
+
+    expect(character).toMatchObject({
+      id: 1,
+      name: 'Rick Sanchez',
+      status: CharacterStatus.Alive,
+      episodeIds: [1, 2],
+    });
+  });
+
+  it('propagates a 404 as an HttpError', async () => {
+    const repository = createCharacterRepository();
+
+    const error = await repository
+      .getCharacterById({ id: 9999 })
+      .catch((reason: unknown) => reason);
+
+    expect(error).toBeInstanceOf(HttpError);
+    expect((error as HttpError).status).toBe(404);
+  });
+});
+
+describe('createCharacterRepository · getEpisodesByIds', () => {
+  it('fetches and maps the episodes for the given ids', async () => {
+    const repository = createCharacterRepository();
+
+    const episodes = await repository.getEpisodesByIds({ ids: [1, 2] });
+
+    expect(episodes).toHaveLength(2);
+    expect(episodes[0]).toEqual({
+      id: 1,
+      name: 'Episode 1',
+      code: 'S01E01',
+      airDate: 'December 2, 2013',
+    });
+  });
+
+  it('returns no episodes and skips the client when ids is empty', async () => {
+    const fetchSpy = vi.spyOn(rickMortyClient, 'fetchEpisodesByIds');
+    const repository = createCharacterRepository();
+
+    const episodes = await repository.getEpisodesByIds({ ids: [] });
+
+    expect(episodes).toEqual([]);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 });

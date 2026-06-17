@@ -26,7 +26,7 @@ function buildApiCharacter(overrides: Partial<CharacterApiDto> = {}): CharacterA
 }
 
 describe('mapCharacter', () => {
-  it('maps every field and derives episodeCount from the episode list', () => {
+  it('maps every field and derives episodeCount and episodeIds from the episode list', () => {
     expect(mapCharacter(buildApiCharacter())).toEqual({
       id: 1,
       name: 'Rick Sanchez',
@@ -38,6 +38,7 @@ describe('mapCharacter', () => {
       location: { name: 'Citadel of Ricks', url: 'https://rickandmortyapi.com/api/location/3' },
       imageUrl: 'https://rickandmortyapi.com/api/character/avatar/1.jpeg',
       episodeCount: 2,
+      episodeIds: [1, 2],
     });
   });
 

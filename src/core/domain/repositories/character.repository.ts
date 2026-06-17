@@ -3,6 +3,7 @@ import type {
   CharacterGender,
   CharacterStatus,
 } from '@/core/domain/entities/character.entity';
+import type { Episode } from '@/core/domain/entities/episode.entity';
 
 /**
  * Filter criteria for querying characters. All fields are optional; an empty
@@ -38,9 +39,27 @@ export interface GetCharactersQuery {
 }
 
 /**
+ * Arguments accepted by {@link CharacterRepository.getCharacterById}.
+ */
+export interface GetCharacterByIdQuery {
+  id: number;
+  signal?: AbortSignal;
+}
+
+/**
+ * Arguments accepted by {@link CharacterRepository.getEpisodesByIds}.
+ */
+export interface GetEpisodesByIdsQuery {
+  ids: number[];
+  signal?: AbortSignal;
+}
+
+/**
  * Port the application layer depends on. Infrastructure provides the concrete
  * implementation; the domain never knows about HTTP, the API, or React.
  */
 export interface CharacterRepository {
   getCharacters(query: GetCharactersQuery): Promise<CharacterPage>;
+  getCharacterById(query: GetCharacterByIdQuery): Promise<Character>;
+  getEpisodesByIds(query: GetEpisodesByIdsQuery): Promise<Episode[]>;
 }

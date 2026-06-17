@@ -1,5 +1,6 @@
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Link, useLocation } from 'react-router';
 
 import type { CharacterGender, CharacterStatus } from '@/core/domain/entities/character.entity';
 import type { CharacterFilters } from '@/core/domain/repositories/character.repository';
@@ -7,8 +8,10 @@ import { CharacterCard } from '@/presentation/components/character/character-car
 import { CharacterCardSkeleton } from '@/presentation/components/character/character-card-skeleton';
 import { CharacterFilters as CharacterFiltersBar } from '@/presentation/components/character/character-filters';
 import { CharacterPagination } from '@/presentation/components/character/character-pagination';
+import { ErrorState } from '@/presentation/components/error-state';
 import { Button } from '@/presentation/components/ui/button';
 import { useCharacters } from '@/presentation/hooks/use-characters.hook';
+import { buildCharacterDetailPath } from '@/presentation/routes/paths';
 
 const FIRST_PAGE = 1;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -21,15 +24,6 @@ function LoadingGrid() {
       {Array.from({ length: SKELETON_COUNT }, (_, index) => (
         <CharacterCardSkeleton key={index} />
       ))}
-    </div>
-  );
-}
-
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="flex flex-col items-center gap-4 py-16 text-center">
-      <p className="text-muted-foreground">Something went wrong while loading characters.</p>
-      <Button onClick={onRetry}>Try again</Button>
     </div>
   );
 }
@@ -104,6 +98,8 @@ export function HomePage() {
   }, [name, status, gender]);
 
   const { data, isPending, isError, refetch } = useCharacters({ page, filters });
+  const location = useLocation();
+  const listUrl = `${location.pathname}${location.search}`;
 
   function handleStatusChange(next: string) {
     void setStatus(next || null);
@@ -125,7 +121,12 @@ export function HomePage() {
 
   let content: ReactNode;
   if (isError) {
-    content = <ErrorState onRetry={() => void refetch()} />;
+    content = (
+      <ErrorState
+        onRetry={() => void refetch()}
+        message="Something went wrong while loading characters."
+      />
+    );
   } else if (isPending || !data) {
     content = <LoadingGrid />;
   } else if (data.characters.length === 0) {
@@ -135,7 +136,13 @@ export function HomePage() {
       <>
         <div className={GRID_CLASSES}>
           {data.characters.map((character) => (
-            <CharacterCard key={character.id} character={character} />
+            <Link
+              key={character.id}
+              to={buildCharacterDetailPath({ id: character.id, back: listUrl })}
+              className="focus-visible:ring-ring rounded-xl focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <CharacterCard character={character} />
+            </Link>
           ))}
         </div>
         <CharacterPagination

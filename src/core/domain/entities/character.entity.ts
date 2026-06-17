@@ -33,8 +33,9 @@ export interface CharacterPlaceRef {
 
 /**
  * Domain entity for a Rick & Morty character. Field names are domain-friendly
- * (`imageUrl`, `episodeCount`) and decoupled from the raw API shape, which is
- * translated by the infrastructure mapper.
+ * (`imageUrl`, `episodeCount`, `episodeIds`) and decoupled from the raw API
+ * shape, which is translated by the infrastructure mapper. `episodeIds` holds
+ * the episode ids the character appears in (used to fetch them on the detail).
  */
 export interface Character {
   id: number;
@@ -47,6 +48,7 @@ export interface Character {
   location: CharacterPlaceRef;
   imageUrl: string;
   episodeCount: number;
+  episodeIds: number[];
 }
 
 /**

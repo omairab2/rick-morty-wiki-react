@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GetCharactersResponseDto } from '@/application/dto/character.dto';
+import type { CharacterApiDto, GetCharactersResponseDto } from '@/application/dto/character.dto';
+import type { EpisodeApiDto, GetEpisodesResponseDto } from '@/application/dto/episode.dto';
 import { characterListResponse, characterNotFoundHandler } from '@/infrastructure/mocks/handlers';
 import { server } from '@/infrastructure/mocks/server';
 import { env } from '@/shared/config/env';
 
 const CHARACTER_ENDPOINT = `${env.apiBaseUrl}/character`;
+const EPISODE_ENDPOINT = `${env.apiBaseUrl}/episode`;
 
 describe('character MSW handlers', () => {
   it('serves a successful list with at least two characters by default', async () => {
@@ -23,5 +25,38 @@ describe('character MSW handlers', () => {
     const response = await fetch(CHARACTER_ENDPOINT);
 
     expect(response.status).toBe(404);
+  });
+
+  it('serves a single character by id', async () => {
+    const response = await fetch(`${CHARACTER_ENDPOINT}/1`);
+    expect(response.ok).toBe(true);
+
+    const body = (await response.json()) as CharacterApiDto;
+    expect(body.id).toBe(1);
+    expect(body.name).toBe('Rick Sanchez');
+  });
+
+  it('serves a 404 for the reserved missing id', async () => {
+    const response = await fetch(`${CHARACTER_ENDPOINT}/9999`);
+
+    expect(response.status).toBe(404);
+  });
+});
+
+describe('episode MSW handlers', () => {
+  it('returns a single object when one id is requested', async () => {
+    const response = await fetch(`${EPISODE_ENDPOINT}/1`);
+
+    const body = (await response.json()) as GetEpisodesResponseDto;
+    expect(Array.isArray(body)).toBe(false);
+    expect((body as EpisodeApiDto).id).toBe(1);
+  });
+
+  it('returns an array when several ids are requested', async () => {
+    const response = await fetch(`${EPISODE_ENDPOINT}/1,2,3`);
+
+    const body = (await response.json()) as GetEpisodesResponseDto;
+    expect(Array.isArray(body)).toBe(true);
+    expect(body as EpisodeApiDto[]).toHaveLength(3);
   });
 });
