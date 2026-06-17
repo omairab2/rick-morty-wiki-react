@@ -136,3 +136,10 @@ querystring (filtros de personajes, paginación, búsqueda), en vez de manejar
 | UI                 | Tailwind "a secas" sin shadcn     | Reescribiríamos a mano accesibilidad y primitives que Radix ya resuelve.         |
 | Estado en la URL   | `useSearchParams` manual          | Boilerplate de parseo/serialización y sincronización propensa a bugs.            |
 | Estado en la URL   | Estado global (Zustand/Context)   | No es compartible por URL ni sobrevive a recarga; rompe back/forward.            |
+
+---
+
+## Decisiones relacionadas
+
+- [ADR 002: Lazy route splitting](002-lazy-route-splitting.md) — code splitting por
+  ruta con `React.lazy` + `Suspense` para reducir el bundle inicial.
