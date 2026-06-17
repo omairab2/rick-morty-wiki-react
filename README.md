@@ -1,16 +1,12 @@
 # Rick & Morty Wiki
 
-![Tests](https://img.shields.io/badge/tests-84_passing-brightgreen)
-![Build](https://img.shields.io/badge/build-passing-brightgreen)
+[![CI](https://github.com/omairab2/rick-morty-wiki-react/actions/workflows/ci.yml/badge.svg)](https://github.com/omairab2/rick-morty-wiki-react/actions/workflows/ci.yml)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 
 A Rick & Morty wiki SPA built with **React 19 + TypeScript** following **Clean
 Architecture**. Data comes from the public [Rick and Morty API](https://rickandmortyapi.com/).
-
-> The test/build badges are static. Once CI (GitHub Actions) is configured they
-> can be wired to the live workflow status.
 
 ## Overview
 
@@ -138,8 +134,7 @@ Architecture and tooling decisions are recorded as ADRs in
 - [ ] **Episodes** feature (`/episodes`) reusing the same layer flow.
 - [ ] **Locations** feature (`/locations`).
 - [ ] **E2E tests** (Playwright) for the list → detail → back-with-filters flow.
-- [ ] **CI** (GitHub Actions) running lint + type-check + tests on every PR, with
-      live status badges.
+- [x] **CI** (GitHub Actions) running type-check + lint + tests + build on every push/PR.
 - [ ] Character detail polish: related characters, episode links.
 
 ## Contributing
