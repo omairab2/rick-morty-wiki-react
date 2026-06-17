@@ -1,11 +1,171 @@
-export function HomePage() {
+import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+
+import type { CharacterGender, CharacterStatus } from '@/core/domain/entities/character.entity';
+import type { CharacterFilters } from '@/core/domain/repositories/character.repository';
+import { CharacterCard } from '@/presentation/components/character/character-card';
+import { CharacterCardSkeleton } from '@/presentation/components/character/character-card-skeleton';
+import { CharacterFilters as CharacterFiltersBar } from '@/presentation/components/character/character-filters';
+import { CharacterPagination } from '@/presentation/components/character/character-pagination';
+import { Button } from '@/presentation/components/ui/button';
+import { useCharacters } from '@/presentation/hooks/use-characters.hook';
+
+const FIRST_PAGE = 1;
+const SEARCH_DEBOUNCE_MS = 400;
+const SKELETON_COUNT = 8;
+const GRID_CLASSES = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+
+function LoadingGrid() {
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-4 px-6 py-16">
-      <h1 className="text-4xl font-bold tracking-tight">Rick &amp; Morty Wiki</h1>
-      <p className="text-muted-foreground">
-        Project scaffold is ready. Build the character, episode, and location features on top of the
-        core, application, infrastructure, and presentation layers.
-      </p>
+    <div className={GRID_CLASSES} aria-busy="true">
+      {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+        <CharacterCardSkeleton key={index} />
+      ))}
+    </div>
+  );
+}
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-16 text-center">
+      <p className="text-muted-foreground">Something went wrong while loading characters.</p>
+      <Button onClick={onRetry}>Try again</Button>
+    </div>
+  );
+}
+
+function EmptyState({
+  searchTerm,
+  onClearFilters,
+}: {
+  searchTerm: string;
+  onClearFilters: () => void;
+}) {
+  const message = searchTerm
+    ? `No characters found for '${searchTerm}'`
+    : 'No characters match the selected filters.';
+
+  return (
+    <div className="flex flex-col items-center gap-4 py-16 text-center">
+      <p className="text-muted-foreground">{message}</p>
+      <Button variant="outline" onClick={onClearFilters}>
+        Clear filters
+      </Button>
+    </div>
+  );
+}
+
+export function HomePage() {
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(FIRST_PAGE));
+  const [name, setName] = useQueryState('name', parseAsString.withDefault(''));
+  const [status, setStatus] = useQueryState('status', parseAsString.withDefault(''));
+  const [gender, setGender] = useQueryState('gender', parseAsString.withDefault(''));
+
+  const [searchInput, setSearchInput] = useState(name);
+  const lastWrittenName = useRef(name);
+
+  // Debounce the search box → URL, resetting to the first page, after the user
+  // stops typing. Keying the query off the URL `name` means the request is
+  // debounced too (not fired on every keystroke).
+  useEffect(() => {
+    if (searchInput === name) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      lastWrittenName.current = searchInput;
+      void setName(searchInput || null);
+      void setPage(FIRST_PAGE);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput, name, setName, setPage]);
+
+  // Sync the input when the URL changes externally (back/forward, clear filters).
+  useEffect(() => {
+    if (name !== lastWrittenName.current) {
+      lastWrittenName.current = name;
+      setSearchInput(name);
+    }
+  }, [name]);
+
+  const filters = useMemo<CharacterFilters>(() => {
+    const result: CharacterFilters = {};
+    if (name) {
+      result.name = name;
+    }
+    if (status) {
+      result.status = status as CharacterStatus;
+    }
+    if (gender) {
+      result.gender = gender as CharacterGender;
+    }
+    return result;
+  }, [name, status, gender]);
+
+  const { data, isPending, isError, refetch } = useCharacters({ page, filters });
+
+  function handleStatusChange(next: string) {
+    void setStatus(next || null);
+    void setPage(FIRST_PAGE);
+  }
+
+  function handleGenderChange(next: string) {
+    void setGender(next || null);
+    void setPage(FIRST_PAGE);
+  }
+
+  function handleClearFilters() {
+    setSearchInput('');
+    void setName(null);
+    void setStatus(null);
+    void setGender(null);
+    void setPage(FIRST_PAGE);
+  }
+
+  let content: ReactNode;
+  if (isError) {
+    content = <ErrorState onRetry={() => void refetch()} />;
+  } else if (isPending || !data) {
+    content = <LoadingGrid />;
+  } else if (data.characters.length === 0) {
+    content = <EmptyState searchTerm={name} onClearFilters={handleClearFilters} />;
+  } else {
+    content = (
+      <>
+        <div className={GRID_CLASSES}>
+          {data.characters.map((character) => (
+            <CharacterCard key={character.id} character={character} />
+          ))}
+        </div>
+        <CharacterPagination
+          page={data.page}
+          totalPages={data.totalPages}
+          hasPreviousPage={data.hasPreviousPage}
+          hasNextPage={data.hasNextPage}
+          onPageChange={(nextPage) => void setPage(nextPage)}
+        />
+      </>
+    );
+  }
+
+  return (
+    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">Rick &amp; Morty Wiki</h1>
+        <p className="text-muted-foreground">
+          Browse, search, and filter the characters of the multiverse.
+        </p>
+      </header>
+
+      <CharacterFiltersBar
+        value={{ search: searchInput, status, gender }}
+        onSearchChange={setSearchInput}
+        onStatusChange={handleStatusChange}
+        onGenderChange={handleGenderChange}
+      />
+
+      {content}
     </main>
   );
 }
