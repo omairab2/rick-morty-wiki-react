@@ -1,72 +1,148 @@
 # Rick & Morty Wiki
 
+![Tests](https://img.shields.io/badge/tests-84_passing-brightgreen)
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+
 A Rick & Morty wiki SPA built with **React 19 + TypeScript** following **Clean
 Architecture**. Data comes from the public [Rick and Morty API](https://rickandmortyapi.com/).
 
+> The test/build badges are static. Once CI (GitHub Actions) is configured they
+> can be wired to the live workflow status.
+
+## Overview
+
+- **Characters list** (`/`) — responsive grid of character cards with name
+  search (debounced), status & gender filters, and pagination. All filters and
+  the current page live in the **URL** (shareable, survives refresh and
+  back/forward).
+- **Character detail** (`/characters/:id`) — large image, status/species/origin
+  /location, and the episodes the character appears in. A breadcrumb returns to
+  the exact filtered list it was opened from. Handles loading (skeleton),
+  **404 not-found**, and generic errors (with retry) distinctly.
+
+<!-- Screenshot: add docs/screenshot.png and reference it here, e.g. -->
+<!-- ![Characters list](docs/screenshot.png) -->
+
 ## Tech stack
 
-| Concern      | Choice                                         |
-| ------------ | ---------------------------------------------- |
-| Build / dev  | Vite + `@vitejs/plugin-react`                  |
-| UI           | shadcn/ui + Tailwind CSS v4 + Radix primitives |
-| Server state | TanStack Query v5                              |
-| Routing      | React Router v7                                |
-| URL state    | nuqs                                           |
-| Forms        | React Hook Form + Zod                          |
-| Testing      | Vitest + Testing Library + MSW                 |
-| Quality      | ESLint + Prettier + Husky + lint-staged        |
+| Concern      | Choice                                                   |
+| ------------ | -------------------------------------------------------- |
+| Build / dev  | Vite 8 + `@vitejs/plugin-react`                          |
+| Language     | TypeScript 6                                             |
+| UI           | React 19 · shadcn/ui · Tailwind CSS 4 · Radix primitives |
+| Server state | TanStack Query 5                                         |
+| Routing      | React Router 7 (lazy routes)                             |
+| URL state    | nuqs 2                                                   |
+| Forms        | React Hook Form 7 + Zod 4                                |
+| Testing      | Vitest 4 + Testing Library + MSW 2                       |
+| Quality      | ESLint 10 + Prettier 3 + Husky 9 + lint-staged           |
 
-See [docs/decisions/001-architecture-decisions.md](docs/decisions/001-architecture-decisions.md)
-for the rationale behind these choices.
+## Architecture
 
-## Getting started
+`src/` is split into layers with a **one-way dependency rule**. Inner layers
+never import outer ones; infrastructure implements the ports the inner layers
+declare.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ presentation        React: pages, components, hooks, routes│
+│ depends on → application, core, shared                     │
+└───────────────────────────┬────────────────────────────────┘
+                            ▼
+┌──────────────────────────────────────────────────────────┐
+│ application         use cases, DTOs (orchestration)        │
+│ depends on → core, shared                                  │
+└───────────────────────────┬────────────────────────────────┘
+                            ▼
+┌──────────────────────────────────────────────────────────┐
+│ core                entities, value objects, repository    │
+│                     PORTS, domain errors                   │
+│ depends on → (nothing framework-specific)                  │
+└───────────────────────────▲────────────────────────────────┘
+                            │ implements ports
+┌───────────────────────────┴────────────────────────────────┐
+│ infrastructure      API client, repository impls, mappers,  │
+│                     MSW handlers, TanStack Query client      │
+│ depends on → core, application, shared                       │
+└──────────────────────────────────────────────────────────┘
+
+shared/   cross-cutting (config, lib, errors) — usable by every layer.
+```
+
+```
+src/
+├─ core/            # entities, value objects, repository ports, domain errors
+├─ application/     # use cases + DTOs
+├─ infrastructure/  # http client, api, repositories, mappers, query, mocks (MSW)
+├─ presentation/    # app, routes, layouts, pages, components (ui + feature), hooks
+└─ shared/          # config, lib, errors, constants, types
+```
+
+**Example flow — character detail:** `presentation` (hook) → `application`
+(`getCharacterDetail` use case) → `core` (`CharacterRepository` port) ←
+`infrastructure` (repository impl → API client → mapper → domain entity).
+
+## Running locally
+
+Requires **Node ≥ 20** and **pnpm**.
 
 ```bash
+git clone <repo-url>
+cd rick-morty-wiki
 pnpm install
 cp .env.example .env   # adjust VITE_API_BASE_URL if needed
 pnpm dev               # http://localhost:3000
 ```
 
-## Architecture
+To exercise the UI against mocked data instead of the live API, set
+`VITE_ENABLE_MSW=true` in `.env`.
 
-`src/` is split into layers with a one-way dependency rule
-(`presentation → application → core`, `infrastructure → core`):
+## Testing & coverage
 
-```
-src/
-├─ core/            # Domain: entities, value objects, repository ports, errors
-├─ application/     # Use cases and DTOs (orchestrate the domain)
-├─ infrastructure/  # Adapters: http client, repositories, api, mappers, query, mocks
-├─ presentation/    # React: app, routes, layouts, pages, components/ui, hooks
-└─ shared/          # Cross-cutting: config, lib, constants, types
+```bash
+pnpm test          # watch mode
+pnpm test:run      # single run (84 tests across the 4 layers)
+pnpm test:coverage # single run + coverage report (text + HTML in coverage/)
+pnpm test:ui       # Vitest UI
 ```
 
-The domain (`core/`) depends on nothing framework-specific. Infrastructure
-implements the ports defined in `core/`. The presentation layer talks to the
-application layer through hooks.
+Tests use **MSW** to mock the Rick & Morty API, so they never hit the network.
+Every layer is covered: domain logic, use cases, mappers, repository, hooks, and
+components/pages (via Testing Library).
 
-## Scripts
+## Quality scripts
 
-| Script               | Description                              |
-| -------------------- | ---------------------------------------- |
-| `pnpm dev`           | Start the dev server (port 3000)         |
-| `pnpm build`         | Type-check (`tsc -b`) + production build |
-| `pnpm preview`       | Preview the production build             |
-| `pnpm lint`          | Run ESLint                               |
-| `pnpm lint:fix`      | Run ESLint with auto-fix                 |
-| `pnpm format`        | Check formatting with Prettier           |
-| `pnpm format:fix`    | Write formatting with Prettier           |
-| `pnpm type:check`    | Type-check without emitting              |
-| `pnpm test`          | Run Vitest in watch mode                 |
-| `pnpm test:run`      | Run Vitest once                          |
-| `pnpm test:coverage` | Run Vitest with coverage                 |
-| `pnpm test:ui`       | Open the Vitest UI                       |
+| Script            | Description                              |
+| ----------------- | ---------------------------------------- |
+| `pnpm build`      | Type-check (`tsc -b`) + production build |
+| `pnpm lint`       | ESLint                                   |
+| `pnpm format`     | Prettier check                           |
+| `pnpm type:check` | Type-check without emitting              |
 
-## Conventions
+A Husky `pre-commit` hook runs `lint-staged` (ESLint + Prettier on staged files).
 
-- **Path alias:** import from `@/...` (maps to `src/`).
-- **UI components:** add shadcn components with `pnpm dlx shadcn@latest add <name>`
-  — they land in `src/presentation/components/ui/`.
-- **Mocks:** register MSW handlers in `src/infrastructure/mocks/handlers.ts`.
-  Set `VITE_ENABLE_MSW=true` to enable mocking in development.
-- **Git hooks:** `pre-commit` runs `lint-staged` (ESLint + Prettier on staged files).
+## Technical decisions
+
+Architecture and tooling decisions are recorded as ADRs in
+[`docs/decisions/`](docs/decisions/):
+
+- [ADR 001 — Architecture & stack](docs/decisions/001-architecture-decisions.md)
+- [ADR 002 — Lazy route splitting](docs/decisions/002-lazy-route-splitting.md)
+- [ADR 003 — HttpError in the shared layer](docs/decisions/003-http-error-in-shared-layer.md)
+
+## Roadmap / next steps
+
+- [ ] **Episodes** feature (`/episodes`) reusing the same layer flow.
+- [ ] **Locations** feature (`/locations`).
+- [ ] **E2E tests** (Playwright) for the list → detail → back-with-filters flow.
+- [ ] **CI** (GitHub Actions) running lint + type-check + tests on every PR, with
+      live status badges.
+- [ ] Character detail polish: related characters, episode links.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit conventions, and
+how to add a feature across the layers.
