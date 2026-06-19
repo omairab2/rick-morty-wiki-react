@@ -34,6 +34,12 @@ describe('CharacterCard', () => {
     expect(screen.getByText('Origin:')).toBeInTheDocument();
   });
 
+  it('exposes the full name as a title tooltip so long names are recoverable', () => {
+    render(<CharacterCard character={CHARACTER} />);
+
+    expect(screen.getByText('Rick Sanchez')).toHaveAttribute('title', 'Rick Sanchez');
+  });
+
   it('renders the character image using the name as alt text', () => {
     render(<CharacterCard character={CHARACTER} />);
 

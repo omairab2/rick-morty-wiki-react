@@ -10,7 +10,9 @@ export function LocationCard({ location }: LocationCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="truncate">{location.name}</CardTitle>
+        <CardTitle className="truncate" title={location.name}>
+          {location.name}
+        </CardTitle>
         <Badge variant="secondary" className="w-fit">
           {location.type}
         </Badge>

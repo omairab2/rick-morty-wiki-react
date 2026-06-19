@@ -113,6 +113,14 @@ export function LocationsListPage() {
   const routerLocation = useLocation();
   const listUrl = `${routerLocation.pathname}${routerLocation.search}`;
 
+  // An out-of-range page (the API answers 404 → empty page) snaps back to the
+  // first page instead of leaving the user stranded on a blank, paginated view.
+  useEffect(() => {
+    if (data && data.totalCount === 0 && page > FIRST_PAGE) {
+      void setPage(FIRST_PAGE);
+    }
+  }, [data, page, setPage]);
+
   function handleClearFilters() {
     setFilterInput({ name: '', type: '', dimension: '' });
     void setName(null);

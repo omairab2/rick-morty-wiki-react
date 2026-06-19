@@ -2,11 +2,14 @@ import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 
-import type { CharacterGender, CharacterStatus } from '@/core/domain/entities/character.entity';
 import type { CharacterFilters } from '@/core/domain/repositories/character.repository';
 import { CharacterCard } from '@/presentation/components/character/character-card';
 import { CharacterCardSkeleton } from '@/presentation/components/character/character-card-skeleton';
 import { CharacterFilters as CharacterFiltersBar } from '@/presentation/components/character/character-filters';
+import {
+  toGenderFilter,
+  toStatusFilter,
+} from '@/presentation/components/character/character-filters.helper';
 import { CharacterPagination } from '@/presentation/components/character/character-pagination';
 import { ErrorState } from '@/presentation/components/error-state';
 import { ResultsCount } from '@/presentation/components/results-count';
@@ -89,11 +92,13 @@ export function HomePage() {
     if (name) {
       result.name = name;
     }
-    if (status) {
-      result.status = status as CharacterStatus;
+    const statusFilter = status ? toStatusFilter(status) : undefined;
+    if (statusFilter) {
+      result.status = statusFilter;
     }
-    if (gender) {
-      result.gender = gender as CharacterGender;
+    const genderFilter = gender ? toGenderFilter(gender) : undefined;
+    if (genderFilter) {
+      result.gender = genderFilter;
     }
     return result;
   }, [name, status, gender]);
@@ -101,6 +106,14 @@ export function HomePage() {
   const { data, isPending, isError, refetch } = useCharacters({ page, filters });
   const location = useLocation();
   const listUrl = `${location.pathname}${location.search}`;
+
+  // An out-of-range page (the API answers 404 → empty page) snaps back to the
+  // first page instead of leaving the user stranded on a blank, paginated view.
+  useEffect(() => {
+    if (data && data.totalCount === 0 && page > FIRST_PAGE) {
+      void setPage(FIRST_PAGE);
+    }
+  }, [data, page, setPage]);
 
   function handleStatusChange(next: string) {
     void setStatus(next || null);

@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
-import { characterSuccessHandler } from '@/infrastructure/mocks/handlers';
+import { characterListResponse, characterSuccessHandler } from '@/infrastructure/mocks/handlers';
 import { server } from '@/infrastructure/mocks/server';
 import { HomePage } from '@/presentation/pages/home/home-page';
 import { env } from '@/shared/config/env';
@@ -52,6 +52,24 @@ describe('HomePage', () => {
       expect(screen.getByText("No characters found for 'bethb'")).toBeInTheDocument(),
     );
     expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
+  });
+
+  it('snaps an out-of-range page back to the first page instead of showing an error', async () => {
+    // The API answers 404 (→ empty page) for any page beyond the first.
+    server.use(
+      http.get(CHARACTER_ENDPOINT, ({ request }) => {
+        const page = Number(new URL(request.url).searchParams.get('page') ?? '1');
+        if (page > 1) {
+          return HttpResponse.json({ error: 'There is nothing here' }, { status: 404 });
+        }
+        return HttpResponse.json(characterListResponse);
+      }),
+    );
+
+    renderHomePage('?page=9');
+
+    await waitFor(() => expect(screen.getByText('Rick Sanchez')).toBeInTheDocument());
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 
   it('shows an error state and retries with refetch on success', async () => {

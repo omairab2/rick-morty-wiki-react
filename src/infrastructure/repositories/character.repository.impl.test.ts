@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CharacterStatus } from '@/core/domain/entities/character.entity';
+import { CharacterGender, CharacterStatus } from '@/core/domain/entities/character.entity';
 import { rickMortyClient } from '@/infrastructure/api/rick-morty.client';
 import { HttpError } from '@/shared/errors/http.error';
 import { characterNotFoundHandler } from '@/infrastructure/mocks/handlers';
@@ -46,13 +46,14 @@ describe('createCharacterRepository · getCharacters', () => {
     const repository = createCharacterRepository();
     await repository.getCharacters({
       page: 2,
-      filters: { name: 'Rick', status: CharacterStatus.Alive },
+      filters: { name: 'Rick', status: CharacterStatus.Alive, gender: CharacterGender.Genderless },
     });
 
     const url = new URL(capturedUrl);
     expect(url.searchParams.get('page')).toBe('2');
     expect(url.searchParams.get('name')).toBe('Rick');
     expect(url.searchParams.get('status')).toBe('alive');
+    expect(url.searchParams.get('gender')).toBe('genderless');
   });
 
   it('treats a 404 list response as an empty page (no results)', async () => {

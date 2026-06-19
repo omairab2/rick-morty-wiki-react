@@ -35,7 +35,9 @@ export function CharacterCard({ character }: CharacterCardProps) {
       )}
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="truncate">{character.name}</CardTitle>
+          <CardTitle className="min-w-0 truncate" title={character.name}>
+            {character.name}
+          </CardTitle>
           <CharacterStatusBadge status={character.status} />
         </div>
       </CardHeader>

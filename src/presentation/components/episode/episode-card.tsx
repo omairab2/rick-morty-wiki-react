@@ -13,7 +13,9 @@ export function EpisodeCard({ episode }: EpisodeCardProps) {
         <Badge variant="secondary" className="w-fit font-mono">
           {episode.code}
         </Badge>
-        <CardTitle className="truncate">{episode.name}</CardTitle>
+        <CardTitle className="truncate" title={episode.name}>
+          {episode.name}
+        </CardTitle>
       </CardHeader>
       <CardContent className="text-muted-foreground text-sm">{episode.airDate}</CardContent>
     </Card>
