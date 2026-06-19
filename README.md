@@ -21,6 +21,10 @@ Architecture**. Data comes from the public [Rick and Morty API](https://rickandm
   /location, and the episodes the character appears in. A breadcrumb returns to
   the exact filtered list it was opened from. Handles loading (skeleton),
   **404 not-found**, and generic errors (with retry) distinctly.
+- **Episodes** (`/episodes`) and **Locations** (`/locations`) — the same
+  list → detail flow: URL-driven search/filters and pagination, with detail views
+  that reuse the character cards (an episode's cast, a location's residents). Each
+  feature owns its repository port; cross-entity fetches live on that port.
 
 ![Rick & Morty Wiki — characters list](docs/screenshot.jpg)
 
@@ -35,7 +39,8 @@ Architecture**. Data comes from the public [Rick and Morty API](https://rickandm
 | Routing      | React Router 7 (lazy routes)                             |
 | URL state    | nuqs 2                                                   |
 | Forms        | React Hook Form 7 + Zod 4                                |
-| Testing      | Vitest 4 + Testing Library + MSW 2                       |
+| Unit tests   | Vitest 4 + Testing Library + MSW 2                       |
+| E2E tests    | Playwright (Chromium, against the MSW mocks)             |
 | Quality      | ESLint 10 + Prettier 3 + Husky 9 + lint-staged           |
 
 ## Architecture
@@ -89,7 +94,7 @@ Requires **Node ≥ 20** and **pnpm**.
 
 ```bash
 git clone <repo-url>
-cd rick-morty-wiki
+cd rick-morty-wiki-react
 pnpm install
 cp .env.example .env   # adjust VITE_API_BASE_URL if needed
 pnpm dev               # http://localhost:3000
@@ -98,11 +103,13 @@ pnpm dev               # http://localhost:3000
 To exercise the UI against mocked data instead of the live API, set
 `VITE_ENABLE_MSW=true` in `.env`.
 
-## Testing & coverage
+## Testing
+
+**Unit & integration** — Vitest + Testing Library + MSW:
 
 ```bash
 pnpm test          # watch mode
-pnpm test:run      # single run (84 tests across the 4 layers)
+pnpm test:run      # single run (193 tests across the 4 layers)
 pnpm test:coverage # single run + coverage report (text + HTML in coverage/)
 pnpm test:ui       # Vitest UI
 ```
@@ -110,6 +117,19 @@ pnpm test:ui       # Vitest UI
 Tests use **MSW** to mock the Rick & Morty API, so they never hit the network.
 Every layer is covered: domain logic, use cases, mappers, repository, hooks, and
 components/pages (via Testing Library).
+
+**End-to-end** — Playwright (Chromium):
+
+```bash
+pnpm exec playwright install --with-deps chromium   # one-time: install the browser
+pnpm test:e2e       # run the E2E suite (e2e/)
+pnpm test:e2e:ui    # Playwright UI mode
+```
+
+Playwright boots the dev server with `VITE_ENABLE_MSW=true`, so the flows run
+against the **same MSW mocks** — deterministic and offline. The suite (`e2e/`)
+covers the characters list → search/filter → detail → back-to-filtered-list
+journey.
 
 ## Quality scripts
 
@@ -148,10 +168,11 @@ Architecture and tooling decisions are recorded as ADRs in
 ## Roadmap / next steps
 
 - [x] **Episodes** feature (`/episodes`) reusing the same layer flow.
-- [x] **CI** (GitHub Actions) running type-check + lint + tests + build on every push/PR.
+- [x] **Locations** feature (`/locations`) reusing the same layer flow.
+- [x] **CI** (GitHub Actions): type-check + lint + unit tests + build, plus a
+      Playwright **E2E** job, on every push/PR.
 - [x] **Deploy** on Vercel (SPA rewrites via `vercel.json`).
-- [ ] **Locations** feature (`/locations`).
-- [ ] **E2E tests** (Playwright) for the list → detail → back-with-filters flow.
+- [x] **E2E tests** (Playwright) for the list → detail → back-with-filters flow.
 - [ ] Character detail polish: related characters, episode links.
 
 ## Contributing
