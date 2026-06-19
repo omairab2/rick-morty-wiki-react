@@ -1,9 +1,14 @@
 import type {
   CharacterApiDto,
+  GetCharactersByIdsResponseDto,
   GetCharactersRequestDto,
   GetCharactersResponseDto,
 } from '@/application/dto/character.dto';
-import type { GetEpisodesResponseDto } from '@/application/dto/episode.dto';
+import type {
+  GetEpisodesListResponseDto,
+  GetEpisodesRequestDto,
+  GetEpisodesResponseDto,
+} from '@/application/dto/episode.dto';
 import { httpClient } from '@/infrastructure/http/http-client';
 
 const CHARACTER_RESOURCE_PATH = '/character';
@@ -27,6 +32,27 @@ function buildCharacterQuery(request: GetCharactersRequestDto): string {
   }
   if (request.species) {
     params.set('species', request.species);
+  }
+  if (request.page !== undefined) {
+    params.set('page', String(request.page));
+  }
+
+  const query = params.toString();
+
+  return query ? `?${query}` : '';
+}
+
+/**
+ * Build the `/episode` query string from a request DTO.
+ */
+function buildEpisodeQuery(request: GetEpisodesRequestDto): string {
+  const params = new URLSearchParams();
+
+  if (request.name) {
+    params.set('name', request.name);
+  }
+  if (request.episode) {
+    params.set('episode', request.episode);
   }
   if (request.page !== undefined) {
     params.set('page', String(request.page));
@@ -67,6 +93,42 @@ function fetchCharacterById({ id, signal }: FetchCharacterByIdArgs): Promise<Cha
   return httpClient.get<CharacterApiDto>({ path: `${CHARACTER_RESOURCE_PATH}/${id}`, signal });
 }
 
+export interface FetchCharactersByIdsArgs {
+  ids: number[];
+  signal?: AbortSignal;
+}
+
+/**
+ * Fetch characters by id (`/character/:ids`). The API returns a single object
+ * for one id and an array for several; the DTO layer normalizes that.
+ */
+function fetchCharactersByIds({
+  ids,
+  signal,
+}: FetchCharactersByIdsArgs): Promise<GetCharactersByIdsResponseDto> {
+  return httpClient.get<GetCharactersByIdsResponseDto>({
+    path: `${CHARACTER_RESOURCE_PATH}/${ids.join(',')}`,
+    signal,
+  });
+}
+
+export interface FetchEpisodesArgs {
+  request: GetEpisodesRequestDto;
+  signal?: AbortSignal;
+}
+
+/**
+ * Fetch a page of episodes from the `/episode` list endpoint.
+ */
+function fetchEpisodes({
+  request,
+  signal,
+}: FetchEpisodesArgs): Promise<GetEpisodesListResponseDto> {
+  const path = `${EPISODE_RESOURCE_PATH}${buildEpisodeQuery(request)}`;
+
+  return httpClient.get<GetEpisodesListResponseDto>({ path, signal });
+}
+
 export interface FetchEpisodesByIdsArgs {
   ids: number[];
   signal?: AbortSignal;
@@ -90,5 +152,7 @@ function fetchEpisodesByIds({
 export const rickMortyClient = {
   fetchCharacters,
   fetchCharacterById,
+  fetchCharactersByIds,
+  fetchEpisodes,
   fetchEpisodesByIds,
 };

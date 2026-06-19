@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeEpisodesResponse, type EpisodeApiDto } from '@/application/dto/episode.dto';
+import {
+  EPISODE_REQUEST_PARAM_KEYS,
+  normalizeEpisodesResponse,
+  type EpisodeApiDto,
+} from '@/application/dto/episode.dto';
 
 function buildEpisode(overrides: Partial<EpisodeApiDto> = {}): EpisodeApiDto {
   return {
@@ -14,6 +18,12 @@ function buildEpisode(overrides: Partial<EpisodeApiDto> = {}): EpisodeApiDto {
     ...overrides,
   };
 }
+
+describe('EPISODE_REQUEST_PARAM_KEYS', () => {
+  it('matches exactly the query params the Rick & Morty /episode endpoint accepts', () => {
+    expect([...EPISODE_REQUEST_PARAM_KEYS]).toEqual(['name', 'episode', 'page']);
+  });
+});
 
 describe('normalizeEpisodesResponse', () => {
   it('wraps a single episode object into an array', () => {

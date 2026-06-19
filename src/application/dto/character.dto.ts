@@ -67,3 +67,18 @@ export interface GetCharactersResponseDto {
   info: CharacterPageInfoApiDto;
   results: CharacterApiDto[];
 }
+
+/**
+ * Response shape of `/character/:ids`: a single object for one id and an array
+ * for several (same convention as the `/episode/:ids` endpoint).
+ */
+export type GetCharactersByIdsResponseDto = CharacterApiDto | CharacterApiDto[];
+
+/**
+ * Normalize the `/character/:ids` response to always be an array.
+ */
+export function normalizeCharactersResponse(
+  response: GetCharactersByIdsResponseDto,
+): CharacterApiDto[] {
+  return Array.isArray(response) ? response : [response];
+}

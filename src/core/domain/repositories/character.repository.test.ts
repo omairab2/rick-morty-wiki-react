@@ -36,7 +36,13 @@ describe('CharacterRepository (port contract)', () => {
       getCharacterById: ({ id }) => Promise.resolve({ ...CHARACTER, id }),
       getEpisodesByIds: ({ ids }) =>
         Promise.resolve(
-          ids.map((id) => ({ id, name: `Episode ${id}`, code: 'S01E01', airDate: '' })),
+          ids.map((id) => ({
+            id,
+            name: `Episode ${id}`,
+            code: 'S01E01',
+            airDate: '',
+            characterIds: [],
+          })),
         ),
     };
 

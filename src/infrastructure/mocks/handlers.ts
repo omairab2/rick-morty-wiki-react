@@ -7,6 +7,7 @@ import { env } from '@/shared/config/env';
 const CHARACTER_ENDPOINT = `${env.apiBaseUrl}/character`;
 const EPISODE_ENDPOINT = `${env.apiBaseUrl}/episode`;
 const NOT_FOUND_CHARACTER_ID = '9999';
+const NOT_FOUND_EPISODE_ID = '9999';
 
 const RICK: CharacterApiDto = {
   id: 1,
@@ -41,17 +42,44 @@ const MORTY: CharacterApiDto = {
   created: '2017-11-04T18:50:21.651Z',
 };
 
+function buildCharacterApiDto(id: number): CharacterApiDto {
+  if (id === RICK.id) {
+    return RICK;
+  }
+  if (id === MORTY.id) {
+    return MORTY;
+  }
+
+  return {
+    ...RICK,
+    id,
+    name: `Character ${id}`,
+    image: `https://rickandmortyapi.com/api/character/avatar/${id}.jpeg`,
+    url: `https://rickandmortyapi.com/api/character/${id}`,
+  };
+}
+
 function buildEpisodeApiDto(id: number): EpisodeApiDto {
   return {
     id,
     name: `Episode ${id}`,
     air_date: 'December 2, 2013',
     episode: `S01E${String(id).padStart(2, '0')}`,
-    characters: ['https://rickandmortyapi.com/api/character/1'],
+    characters: [
+      'https://rickandmortyapi.com/api/character/1',
+      'https://rickandmortyapi.com/api/character/2',
+    ],
     url: `https://rickandmortyapi.com/api/episode/${id}`,
     created: '2017-11-10T12:56:33.798Z',
   };
 }
+
+/** Episodes across two seasons, used by the list handler for filtering. */
+const EPISODE_LIST: EpisodeApiDto[] = [
+  { ...buildEpisodeApiDto(1), name: 'Pilot', episode: 'S01E01' },
+  { ...buildEpisodeApiDto(2), name: 'Lawnmower Dog', episode: 'S01E02' },
+  { ...buildEpisodeApiDto(11), name: 'A Rickle in Time', episode: 'S02E01' },
+];
 
 /**
  * Successful single-page list with two characters. Reused by tests that need a
@@ -72,21 +100,49 @@ export const characterNotFoundHandler = http.get(CHARACTER_ENDPOINT, () =>
   HttpResponse.json({ error: 'There is nothing here' }, { status: 404 }),
 );
 
-/** `/character/:id` — 404 for id `9999`, otherwise the Rick fixture. */
+/**
+ * `/character/:ids` — single object for one id, array for several. 404 if any
+ * requested id is the reserved missing id.
+ */
 export const characterByIdHandler = http.get(`${CHARACTER_ENDPOINT}/:id`, ({ params }) => {
-  if (params.id === NOT_FOUND_CHARACTER_ID) {
+  const ids = String(params.id).split(',');
+  if (ids.includes(NOT_FOUND_CHARACTER_ID)) {
     return HttpResponse.json({ error: 'Character not found' }, { status: 404 });
   }
 
-  return HttpResponse.json(RICK);
+  const characters = ids.map((id) => buildCharacterApiDto(Number(id)));
+
+  return HttpResponse.json(characters.length === 1 ? characters[0] : characters);
+});
+
+/** `/episode` — list, filterable by `name` and `episode` (code) query params. */
+export const episodesListHandler = http.get(EPISODE_ENDPOINT, ({ request }) => {
+  const url = new URL(request.url);
+  const name = (url.searchParams.get('name') ?? '').toLowerCase();
+  const code = (url.searchParams.get('episode') ?? '').toLowerCase();
+
+  const results = EPISODE_LIST.filter(
+    (episode) =>
+      episode.name.toLowerCase().includes(name) && episode.episode.toLowerCase().includes(code),
+  );
+
+  return HttpResponse.json({
+    info: { count: results.length, pages: results.length > 0 ? 1 : 0, next: null, prev: null },
+    results,
+  });
 });
 
 /**
- * `/episode/:ids` — replicates the real API: returns a single object for one id
- * and an array for several.
+ * `/episode/:ids` — single object for one id, array for several. 404 if any
+ * requested id is the reserved missing id.
  */
 export const episodesByIdsHandler = http.get(`${EPISODE_ENDPOINT}/:ids`, ({ params }) => {
-  const episodes = String(params.ids).split(',').map(Number).map(buildEpisodeApiDto);
+  const ids = String(params.ids).split(',');
+  if (ids.includes(NOT_FOUND_EPISODE_ID)) {
+    return HttpResponse.json({ error: 'Episode not found' }, { status: 404 });
+  }
+
+  const episodes = ids.map((id) => buildEpisodeApiDto(Number(id)));
 
   return HttpResponse.json(episodes.length === 1 ? episodes[0] : episodes);
 });
@@ -99,5 +155,6 @@ export const episodesByIdsHandler = http.get(`${EPISODE_ENDPOINT}/:ids`, ({ para
 export const handlers: RequestHandler[] = [
   characterSuccessHandler,
   characterByIdHandler,
+  episodesListHandler,
   episodesByIdsHandler,
 ];

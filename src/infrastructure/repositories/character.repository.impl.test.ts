@@ -116,6 +116,7 @@ describe('createCharacterRepository · getEpisodesByIds', () => {
       name: 'Episode 1',
       code: 'S01E01',
       airDate: 'December 2, 2013',
+      characterIds: [1, 2],
     });
   });
 

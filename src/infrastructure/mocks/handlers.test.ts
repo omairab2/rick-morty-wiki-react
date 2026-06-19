@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { CharacterApiDto, GetCharactersResponseDto } from '@/application/dto/character.dto';
-import type { EpisodeApiDto, GetEpisodesResponseDto } from '@/application/dto/episode.dto';
+import type {
+  EpisodeApiDto,
+  GetEpisodesListResponseDto,
+  GetEpisodesResponseDto,
+} from '@/application/dto/episode.dto';
 import { characterListResponse, characterNotFoundHandler } from '@/infrastructure/mocks/handlers';
 import { server } from '@/infrastructure/mocks/server';
 import { env } from '@/shared/config/env';
@@ -58,5 +62,20 @@ describe('episode MSW handlers', () => {
     const body = (await response.json()) as GetEpisodesResponseDto;
     expect(Array.isArray(body)).toBe(true);
     expect(body as EpisodeApiDto[]).toHaveLength(3);
+  });
+
+  it('filters the episode list by season code', async () => {
+    const response = await fetch(`${EPISODE_ENDPOINT}?episode=S02`);
+
+    const body = (await response.json()) as GetEpisodesListResponseDto;
+    expect(body.results.length).toBeGreaterThan(0);
+    expect(body.results.every((episode) => episode.episode.startsWith('S02'))).toBe(true);
+  });
+
+  it('returns an empty episode list when nothing matches the name', async () => {
+    const response = await fetch(`${EPISODE_ENDPOINT}?name=Nonexistent`);
+
+    const body = (await response.json()) as GetEpisodesListResponseDto;
+    expect(body.results).toHaveLength(0);
   });
 });

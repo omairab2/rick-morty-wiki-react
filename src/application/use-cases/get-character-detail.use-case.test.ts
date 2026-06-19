@@ -28,8 +28,8 @@ const CHARACTER: Character = {
 };
 
 const EPISODES: Episode[] = [
-  { id: 1, name: 'Pilot', code: 'S01E01', airDate: 'December 2, 2013' },
-  { id: 2, name: 'Lawnmower Dog', code: 'S01E02', airDate: 'December 9, 2013' },
+  { id: 1, name: 'Pilot', code: 'S01E01', airDate: 'December 2, 2013', characterIds: [] },
+  { id: 2, name: 'Lawnmower Dog', code: 'S01E02', airDate: 'December 9, 2013', characterIds: [] },
 ];
 
 interface SetupOptions {

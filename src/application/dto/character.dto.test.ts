@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CHARACTER_REQUEST_PARAM_KEYS,
+  normalizeCharactersResponse,
+  type CharacterApiDto,
   type GetCharactersRequestDto,
   type GetCharactersResponseDto,
 } from '@/application/dto/character.dto';
@@ -59,5 +61,32 @@ describe('character DTOs', () => {
 
     expect(response.results).toHaveLength(1);
     expect(response.info.count).toBe(826);
+  });
+});
+
+describe('normalizeCharactersResponse', () => {
+  const character: CharacterApiDto = {
+    id: 1,
+    name: 'Rick Sanchez',
+    status: 'Alive',
+    species: 'Human',
+    type: '',
+    gender: 'Male',
+    origin: { name: 'Earth (C-137)', url: '' },
+    location: { name: 'Citadel of Ricks', url: '' },
+    image: 'https://rickandmortyapi.com/api/character/avatar/1.jpeg',
+    episode: ['https://rickandmortyapi.com/api/episode/1'],
+    url: 'https://rickandmortyapi.com/api/character/1',
+    created: '2017-11-04T18:48:46.250Z',
+  };
+
+  it('wraps a single character object into an array', () => {
+    expect(normalizeCharactersResponse(character)).toEqual([character]);
+  });
+
+  it('returns an array response unchanged', () => {
+    const characters = [character, { ...character, id: 2 }];
+
+    expect(normalizeCharactersResponse(characters)).toEqual(characters);
   });
 });

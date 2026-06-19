@@ -9,6 +9,7 @@ describe('Episode entity', () => {
       name: 'Pilot',
       code: 'S01E01',
       airDate: 'December 2, 2013',
+      characterIds: [1, 2],
     };
 
     expect(episode).toEqual({
@@ -16,6 +17,7 @@ describe('Episode entity', () => {
       name: 'Pilot',
       code: 'S01E01',
       airDate: 'December 2, 2013',
+      characterIds: [1, 2],
     });
   });
 });
