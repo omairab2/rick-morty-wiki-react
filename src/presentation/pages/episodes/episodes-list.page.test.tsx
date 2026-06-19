@@ -36,6 +36,7 @@ describe('EpisodesListPage', () => {
 
     await waitFor(() => expect(screen.getByText('Pilot')).toBeInTheDocument());
     expect(screen.getByText('Lawnmower Dog')).toBeInTheDocument();
+    expect(screen.getByText('3 episodes found')).toBeInTheDocument();
     expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
   });
 

@@ -4,7 +4,7 @@ import { Skeleton } from '@/presentation/components/ui/skeleton';
 export function CharacterCardSkeleton() {
   return (
     <Card className="overflow-hidden pt-0" aria-hidden>
-      <Skeleton className="aspect-square w-full rounded-none" />
+      <Skeleton className="h-48 w-full rounded-none" />
       <CardHeader>
         <Skeleton className="h-5 w-3/4" />
       </CardHeader>

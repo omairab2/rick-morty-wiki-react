@@ -36,6 +36,7 @@ describe('LocationsListPage', () => {
 
     await waitFor(() => expect(screen.getByText('Earth (C-137)')).toBeInTheDocument());
     expect(screen.getByText('Abadango')).toBeInTheDocument();
+    expect(screen.getByText('3 locations found')).toBeInTheDocument();
     expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
   });
 

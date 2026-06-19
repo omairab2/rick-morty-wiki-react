@@ -1,10 +1,10 @@
 /**
- * Season options for the filter, hardcoded to S01–S08 (the real Rick & Morty
- * seasons). Chosen over deriving them from the current results because the
- * results are filtered and paginated: a derived list would be incomplete and
- * would collapse to a single option once a season is selected.
+ * Season options for the filter, hardcoded to S01–S07 (the seasons the API
+ * actually serves). Chosen over deriving them from the current results because
+ * the results are filtered and paginated: a derived list would be incomplete
+ * and would collapse to a single option once a season is selected.
  */
-const SEASON_COUNT = 8;
+const SEASON_COUNT = 7;
 
 export const SEASON_OPTIONS: string[] = Array.from(
   { length: SEASON_COUNT },

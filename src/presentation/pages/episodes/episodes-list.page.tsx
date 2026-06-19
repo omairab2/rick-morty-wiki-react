@@ -8,6 +8,7 @@ import { EpisodeCard } from '@/presentation/components/episode/episode-card';
 import { EpisodeCardSkeleton } from '@/presentation/components/episode/episode-card-skeleton';
 import { EpisodeFilters as EpisodeFiltersBar } from '@/presentation/components/episode/episode-filters';
 import { ErrorState } from '@/presentation/components/error-state';
+import { ResultsCount } from '@/presentation/components/results-count';
 import { Button } from '@/presentation/components/ui/button';
 import { useEpisodes } from '@/presentation/hooks/use-episodes.hook';
 import { buildEpisodeDetailPath } from '@/presentation/routes/paths';
@@ -156,6 +157,10 @@ export function EpisodesListPage() {
         onSearchChange={setSearchInput}
         onSeasonChange={handleSeasonChange}
       />
+
+      {!isError && data && (
+        <ResultsCount count={data.totalCount} singular="episode" plural="episodes" />
+      )}
 
       {content}
     </main>

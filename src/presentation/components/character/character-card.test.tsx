@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -41,5 +41,14 @@ describe('CharacterCard', () => {
       'src',
       CHARACTER.imageUrl,
     );
+  });
+
+  it('falls back to a placeholder when the image fails to load', () => {
+    render(<CharacterCard character={CHARACTER} />);
+
+    fireEvent.error(screen.getByRole('img', { name: 'Rick Sanchez' }));
+
+    expect(document.querySelector('img')).toBeNull();
+    expect(screen.getByRole('img', { name: 'Rick Sanchez' })).toBeInTheDocument();
   });
 });

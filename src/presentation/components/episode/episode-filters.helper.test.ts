@@ -8,8 +8,8 @@ import {
 } from '@/presentation/components/episode/episode-filters.helper';
 
 describe('SEASON_OPTIONS', () => {
-  it('lists seasons S01 through S08', () => {
-    expect(SEASON_OPTIONS).toEqual(['S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07', 'S08']);
+  it('lists seasons S01 through S07', () => {
+    expect(SEASON_OPTIONS).toEqual(['S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07']);
   });
 });
 

@@ -13,10 +13,28 @@ import type {
 import { rickMortyClient } from '@/infrastructure/api/rick-morty.client';
 import { mapCharacter, mapCharacterPage } from '@/infrastructure/mappers/character.mapper';
 import { mapEpisode } from '@/infrastructure/mappers/episode.mapper';
+import { HttpError } from '@/shared/errors/http.error';
+
+const NOT_FOUND_STATUS = 404;
 
 interface ToRequestDtoArgs {
   page: number;
   filters: CharacterFilters;
+}
+
+/**
+ * The API answers `404` when a filter (or an out-of-range page) matches nothing.
+ * That is an empty result, not a failure, so it maps to an empty page.
+ */
+function emptyCharacterPage(page: number): CharacterPage {
+  return {
+    characters: [],
+    page,
+    totalPages: 0,
+    totalCount: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
 }
 
 /**
@@ -51,9 +69,18 @@ export function createCharacterRepository(): CharacterRepository {
   return {
     async getCharacters({ page, filters, signal }: GetCharactersQuery): Promise<CharacterPage> {
       const request = toRequestDto({ page, filters });
-      const response = await rickMortyClient.fetchCharacters({ request, signal });
 
-      return mapCharacterPage({ dto: response, requestedPage: page });
+      try {
+        const response = await rickMortyClient.fetchCharacters({ request, signal });
+
+        return mapCharacterPage({ dto: response, requestedPage: page });
+      } catch (error) {
+        if (error instanceof HttpError && error.status === NOT_FOUND_STATUS) {
+          return emptyCharacterPage(page);
+        }
+
+        throw error;
+      }
     },
 
     async getCharacterById({ id, signal }: GetCharacterByIdQuery): Promise<Character> {

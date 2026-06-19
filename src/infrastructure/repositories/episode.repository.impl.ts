@@ -16,10 +16,28 @@ import type {
 import { rickMortyClient } from '@/infrastructure/api/rick-morty.client';
 import { mapCharacter } from '@/infrastructure/mappers/character.mapper';
 import { mapEpisode, mapEpisodePage } from '@/infrastructure/mappers/episode.mapper';
+import { HttpError } from '@/shared/errors/http.error';
+
+const NOT_FOUND_STATUS = 404;
 
 interface ToRequestDtoArgs {
   page: number;
   filters: EpisodeFilters;
+}
+
+/**
+ * The API answers `404` when a filter (or an out-of-range page) matches nothing.
+ * That is an empty result, not a failure, so it maps to an empty page.
+ */
+function emptyEpisodePage(page: number): EpisodePage {
+  return {
+    episodes: [],
+    page,
+    totalPages: 0,
+    totalCount: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
 }
 
 /**
@@ -49,9 +67,18 @@ export function createEpisodeRepository(): EpisodeRepository {
   return {
     async getEpisodes({ page, filters, signal }: GetEpisodesQuery): Promise<EpisodePage> {
       const request = toRequestDto({ page, filters });
-      const response = await rickMortyClient.fetchEpisodes({ request, signal });
 
-      return mapEpisodePage({ dto: response, requestedPage: page });
+      try {
+        const response = await rickMortyClient.fetchEpisodes({ request, signal });
+
+        return mapEpisodePage({ dto: response, requestedPage: page });
+      } catch (error) {
+        if (error instanceof HttpError && error.status === NOT_FOUND_STATUS) {
+          return emptyEpisodePage(page);
+        }
+
+        throw error;
+      }
     },
 
     async getEpisodeById({ id, signal }: GetEpisodeByIdQuery): Promise<Episode> {

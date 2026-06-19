@@ -9,6 +9,7 @@ import { CharacterCardSkeleton } from '@/presentation/components/character/chara
 import { CharacterFilters as CharacterFiltersBar } from '@/presentation/components/character/character-filters';
 import { CharacterPagination } from '@/presentation/components/character/character-pagination';
 import { ErrorState } from '@/presentation/components/error-state';
+import { ResultsCount } from '@/presentation/components/results-count';
 import { Button } from '@/presentation/components/ui/button';
 import { useCharacters } from '@/presentation/hooks/use-characters.hook';
 import { buildCharacterDetailPath } from '@/presentation/routes/paths';
@@ -171,6 +172,10 @@ export function HomePage() {
         onStatusChange={handleStatusChange}
         onGenderChange={handleGenderChange}
       />
+
+      {!isError && data && (
+        <ResultsCount count={data.totalCount} singular="character" plural="characters" />
+      )}
 
       {content}
     </main>

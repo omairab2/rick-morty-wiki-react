@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
-import { characterNotFoundHandler, characterSuccessHandler } from '@/infrastructure/mocks/handlers';
+import { characterSuccessHandler } from '@/infrastructure/mocks/handlers';
 import { server } from '@/infrastructure/mocks/server';
 import { HomePage } from '@/presentation/pages/home/home-page';
 import { env } from '@/shared/config/env';
@@ -39,6 +39,7 @@ describe('HomePage', () => {
 
     await waitFor(() => expect(screen.getByText('Rick Sanchez')).toBeInTheDocument());
     expect(screen.getByText('Morty Smith')).toBeInTheDocument();
+    expect(screen.getByText('2 characters found')).toBeInTheDocument();
     expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
   });
 
@@ -55,7 +56,9 @@ describe('HomePage', () => {
 
   it('shows an error state and retries with refetch on success', async () => {
     const user = userEvent.setup();
-    server.use(characterNotFoundHandler);
+    server.use(
+      http.get(CHARACTER_ENDPOINT, () => HttpResponse.json({ error: 'boom' }, { status: 500 })),
+    );
 
     renderHomePage();
 

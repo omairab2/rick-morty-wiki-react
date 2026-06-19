@@ -55,8 +55,26 @@ describe('createCharacterRepository · getCharacters', () => {
     expect(url.searchParams.get('status')).toBe('alive');
   });
 
-  it('propagates a 404 response as an HttpError', async () => {
+  it('treats a 404 list response as an empty page (no results)', async () => {
     server.use(characterNotFoundHandler);
+    const repository = createCharacterRepository();
+
+    const page = await repository.getCharacters({ page: 3, filters: { name: 'zzzzz' } });
+
+    expect(page).toEqual({
+      characters: [],
+      page: 3,
+      totalPages: 0,
+      totalCount: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    });
+  });
+
+  it('propagates non-404 errors instead of swallowing them', async () => {
+    server.use(
+      http.get(CHARACTER_ENDPOINT, () => HttpResponse.json({ error: 'boom' }, { status: 500 })),
+    );
     const repository = createCharacterRepository();
 
     const error = await repository
@@ -64,7 +82,7 @@ describe('createCharacterRepository · getCharacters', () => {
       .catch((reason: unknown) => reason);
 
     expect(error).toBeInstanceOf(HttpError);
-    expect((error as HttpError).status).toBe(404);
+    expect((error as HttpError).status).toBe(500);
   });
 
   it('forwards the abort signal so requests can be cancelled', async () => {

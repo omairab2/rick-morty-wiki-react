@@ -53,6 +53,26 @@ describe('createEpisodeRepository · getEpisodes', () => {
     expect(page.episodes).toHaveLength(1);
     expect(page.episodes[0]?.code).toBe('S02E01');
   });
+
+  it('treats a 404 list response as an empty page (no results)', async () => {
+    server.use(
+      http.get(EPISODE_ENDPOINT, () =>
+        HttpResponse.json({ error: 'There is nothing here' }, { status: 404 }),
+      ),
+    );
+    const repository = createEpisodeRepository();
+
+    const page = await repository.getEpisodes({ page: 2, filters: { name: 'zzzzz' } });
+
+    expect(page).toEqual({
+      episodes: [],
+      page: 2,
+      totalPages: 0,
+      totalCount: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    });
+  });
 });
 
 describe('createEpisodeRepository · getEpisodeById', () => {

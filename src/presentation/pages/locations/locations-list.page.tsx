@@ -11,6 +11,7 @@ import {
   type LocationFiltersValue,
 } from '@/presentation/components/location/location-filters';
 import { ErrorState } from '@/presentation/components/error-state';
+import { ResultsCount } from '@/presentation/components/results-count';
 import { Button } from '@/presentation/components/ui/button';
 import { useLocations } from '@/presentation/hooks/use-locations.hook';
 import { buildLocationDetailPath } from '@/presentation/routes/paths';
@@ -172,6 +173,10 @@ export function LocationsListPage() {
           setFilterInput((previous) => ({ ...previous, dimension: value }))
         }
       />
+
+      {!isError && data && (
+        <ResultsCount count={data.totalCount} singular="location" plural="locations" />
+      )}
 
       {content}
     </main>

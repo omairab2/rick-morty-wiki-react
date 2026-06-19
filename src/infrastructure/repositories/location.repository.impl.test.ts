@@ -57,6 +57,26 @@ describe('createLocationRepository · getLocations', () => {
     expect(page.locations).toHaveLength(1);
     expect(page.locations[0]?.name).toBe('Citadel of Ricks');
   });
+
+  it('treats a 404 list response as an empty page (no results)', async () => {
+    server.use(
+      http.get(LOCATION_ENDPOINT, () =>
+        HttpResponse.json({ error: 'There is nothing here' }, { status: 404 }),
+      ),
+    );
+    const repository = createLocationRepository();
+
+    const page = await repository.getLocations({ page: 2, filters: { name: 'zzzzz' } });
+
+    expect(page).toEqual({
+      locations: [],
+      page: 2,
+      totalPages: 0,
+      totalCount: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    });
+  });
 });
 
 describe('createLocationRepository · getLocationById', () => {
