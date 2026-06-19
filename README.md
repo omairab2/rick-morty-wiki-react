@@ -1,6 +1,7 @@
 # Rick & Morty Wiki
 
 [![CI](https://github.com/omairab2/rick-morty-wiki-react/actions/workflows/ci.yml/badge.svg)](https://github.com/omairab2/rick-morty-wiki-react/actions/workflows/ci.yml)
+[![Deploy with Vercel](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fomairab2%2Frick-morty-wiki-react)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
@@ -120,6 +121,20 @@ components/pages (via Testing Library).
 
 A Husky `pre-commit` hook runs `lint-staged` (ESLint + Prettier on staged files).
 
+## Deployment
+
+Deployed on **Vercel**. The repo is connected at [vercel.com](https://vercel.com/) →
+**Add New… → Project → Import** this repository; Vercel auto-detects Vite and reads
+[`vercel.json`](vercel.json):
+
+- `framework: vite`, `buildCommand: pnpm build`, `outputDirectory: dist`.
+- A SPA rewrite sends every unmatched path to `/index.html` so client-side routes
+  (e.g. `/characters/1`, `/episodes/5`) resolve on direct navigation and refresh —
+  without it, deep links would 404.
+
+Every push to `main` triggers a production deploy; pull requests get preview
+deployments. (The badge above is a one-click "deploy your own copy" link.)
+
 ## Technical decisions
 
 Architecture and tooling decisions are recorded as ADRs in
@@ -131,10 +146,11 @@ Architecture and tooling decisions are recorded as ADRs in
 
 ## Roadmap / next steps
 
-- [ ] **Episodes** feature (`/episodes`) reusing the same layer flow.
+- [x] **Episodes** feature (`/episodes`) reusing the same layer flow.
+- [x] **CI** (GitHub Actions) running type-check + lint + tests + build on every push/PR.
+- [x] **Deploy** on Vercel (SPA rewrites via `vercel.json`).
 - [ ] **Locations** feature (`/locations`).
 - [ ] **E2E tests** (Playwright) for the list → detail → back-with-filters flow.
-- [x] **CI** (GitHub Actions) running type-check + lint + tests + build on every push/PR.
 - [ ] Character detail polish: related characters, episode links.
 
 ## Contributing
