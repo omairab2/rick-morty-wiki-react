@@ -29,6 +29,17 @@ describe('character MSW handlers', () => {
     expect(body.results).toHaveLength(characterListResponse.results.length);
   });
 
+  it('filters the character list by name', async () => {
+    const response = await fetch(`${CHARACTER_ENDPOINT}?name=rick`);
+
+    const body = (await response.json()) as GetCharactersResponseDto;
+    expect(body.results.length).toBeGreaterThan(0);
+    expect(body.results.every((character) => character.name.toLowerCase().includes('rick'))).toBe(
+      true,
+    );
+    expect(body.results.length).toBeLessThan(characterListResponse.results.length);
+  });
+
   it('serves a 404 when the not-found handler is active', async () => {
     server.use(characterNotFoundHandler);
 

@@ -36,4 +36,16 @@ export default tseslint.config([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    // Playwright E2E config + specs run in Node, not the browser, and never
+    // export React components, so the browser/fast-refresh assumptions don't
+    // apply here.
+    files: ['playwright.config.ts', 'e2e/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node },
+    },
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ]);

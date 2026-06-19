@@ -116,19 +116,37 @@ const LOCATION_LIST: LocationApiDto[] = [
   },
 ];
 
+/** Characters used by the list handler for filtering (mirrors EPISODE_LIST / LOCATION_LIST). */
+const CHARACTER_LIST: CharacterApiDto[] = [RICK, MORTY];
+
 /**
  * Successful single-page list with two characters. Reused by tests that need a
  * known response body.
  */
 export const characterListResponse: GetCharactersResponseDto = {
-  info: { count: 2, pages: 1, next: null, prev: null },
-  results: [RICK, MORTY],
+  info: { count: CHARACTER_LIST.length, pages: 1, next: null, prev: null },
+  results: CHARACTER_LIST,
 };
 
-/** `/character` — successful list with at least two characters. */
-export const characterSuccessHandler = http.get(CHARACTER_ENDPOINT, () =>
-  HttpResponse.json(characterListResponse),
-);
+/** `/character` — list, filterable by `name`, `status`, and `gender` query params. */
+export const characterSuccessHandler = http.get(CHARACTER_ENDPOINT, ({ request }) => {
+  const url = new URL(request.url);
+  const name = (url.searchParams.get('name') ?? '').toLowerCase();
+  const status = (url.searchParams.get('status') ?? '').toLowerCase();
+  const gender = (url.searchParams.get('gender') ?? '').toLowerCase();
+
+  const results = CHARACTER_LIST.filter(
+    (character) =>
+      character.name.toLowerCase().includes(name) &&
+      character.status.toLowerCase().includes(status) &&
+      character.gender.toLowerCase().includes(gender),
+  );
+
+  return HttpResponse.json({
+    info: { count: results.length, pages: results.length > 0 ? 1 : 0, next: null, prev: null },
+    results,
+  });
+});
 
 /** `/character` — 404, mirroring how the API answers when nothing matches. */
 export const characterNotFoundHandler = http.get(CHARACTER_ENDPOINT, () =>
