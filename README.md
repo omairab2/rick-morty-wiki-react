@@ -22,8 +22,7 @@ Architecture**. Data comes from the public [Rick and Morty API](https://rickandm
   the exact filtered list it was opened from. Handles loading (skeleton),
   **404 not-found**, and generic errors (with retry) distinctly.
 
-<!-- Screenshot: add docs/screenshot.png and reference it here, e.g. -->
-<!-- ![Characters list](docs/screenshot.png) -->
+![Rick & Morty Wiki — characters list](docs/screenshot.jpg)
 
 ## Tech stack
 
