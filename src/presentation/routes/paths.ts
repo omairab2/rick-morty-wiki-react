@@ -9,6 +9,7 @@ export const AppPath = {
   Episodes: '/episodes',
   EpisodeDetail: '/episodes/:id',
   Locations: '/locations',
+  LocationDetail: '/locations/:id',
 } as const;
 
 export type AppPath = (typeof AppPath)[keyof typeof AppPath];
@@ -35,6 +36,16 @@ export function buildCharacterDetailPath({ id, back }: BuildDetailPathArgs): str
  */
 export function buildEpisodeDetailPath({ id, back }: BuildDetailPathArgs): string {
   const base = `/episodes/${id}`;
+
+  return back ? `${base}?back=${encodeURIComponent(back)}` : base;
+}
+
+/**
+ * Build the path to a location's detail page (same `back` convention as
+ * {@link buildCharacterDetailPath}).
+ */
+export function buildLocationDetailPath({ id, back }: BuildDetailPathArgs): string {
+  const base = `/locations/${id}`;
 
   return back ? `${base}?back=${encodeURIComponent(back)}` : base;
 }

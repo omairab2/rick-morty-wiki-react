@@ -9,6 +9,7 @@ import { cn } from '@/shared/lib/utils';
 const NAV_LINKS = [
   { to: AppPath.Home, label: 'Characters', end: true },
   { to: AppPath.Episodes, label: 'Episodes', end: false },
+  { to: AppPath.Locations, label: 'Locations', end: false },
 ];
 
 /**

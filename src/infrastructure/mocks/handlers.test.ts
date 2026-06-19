@@ -6,12 +6,18 @@ import type {
   GetEpisodesListResponseDto,
   GetEpisodesResponseDto,
 } from '@/application/dto/episode.dto';
+import type {
+  GetLocationsByIdsResponseDto,
+  GetLocationsListResponseDto,
+  LocationApiDto,
+} from '@/application/dto/location.dto';
 import { characterListResponse, characterNotFoundHandler } from '@/infrastructure/mocks/handlers';
 import { server } from '@/infrastructure/mocks/server';
 import { env } from '@/shared/config/env';
 
 const CHARACTER_ENDPOINT = `${env.apiBaseUrl}/character`;
 const EPISODE_ENDPOINT = `${env.apiBaseUrl}/episode`;
+const LOCATION_ENDPOINT = `${env.apiBaseUrl}/location`;
 
 describe('character MSW handlers', () => {
   it('serves a successful list with at least two characters by default', async () => {
@@ -77,5 +83,29 @@ describe('episode MSW handlers', () => {
 
     const body = (await response.json()) as GetEpisodesListResponseDto;
     expect(body.results).toHaveLength(0);
+  });
+});
+
+describe('location MSW handlers', () => {
+  it('returns a single object when one id is requested', async () => {
+    const response = await fetch(`${LOCATION_ENDPOINT}/1`);
+
+    const body = (await response.json()) as GetLocationsByIdsResponseDto;
+    expect(Array.isArray(body)).toBe(false);
+    expect((body as LocationApiDto).id).toBe(1);
+  });
+
+  it('filters the location list by type', async () => {
+    const response = await fetch(`${LOCATION_ENDPOINT}?type=Cluster`);
+
+    const body = (await response.json()) as GetLocationsListResponseDto;
+    expect(body.results.length).toBeGreaterThan(0);
+    expect(body.results.every((location) => location.type === 'Cluster')).toBe(true);
+  });
+
+  it('serves a 404 for the reserved missing id', async () => {
+    const response = await fetch(`${LOCATION_ENDPOINT}/9999`);
+
+    expect(response.status).toBe(404);
   });
 });

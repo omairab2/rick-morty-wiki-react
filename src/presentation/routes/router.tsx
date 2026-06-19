@@ -32,10 +32,22 @@ const EpisodeDetailPage = lazy(() =>
     default: module.EpisodeDetailPage,
   })),
 );
+const LocationsListPage = lazy(() =>
+  import('@/presentation/pages/locations/locations-list.page').then((module) => ({
+    default: module.LocationsListPage,
+  })),
+);
+const LocationDetailPage = lazy(() =>
+  import('@/presentation/pages/location-detail/location-detail.page').then((module) => ({
+    default: module.LocationDetailPage,
+  })),
+);
 
 const CHARACTER_DETAIL_ROUTE = 'characters/:id';
 const EPISODES_ROUTE = 'episodes';
 const EPISODE_DETAIL_ROUTE = 'episodes/:id';
+const LOCATIONS_ROUTE = 'locations';
+const LOCATION_DETAIL_ROUTE = 'locations/:id';
 
 const router = createBrowserRouter([
   {
@@ -46,6 +58,8 @@ const router = createBrowserRouter([
       { path: CHARACTER_DETAIL_ROUTE, element: <CharacterDetailPage /> },
       { path: EPISODES_ROUTE, element: <EpisodesListPage /> },
       { path: EPISODE_DETAIL_ROUTE, element: <EpisodeDetailPage /> },
+      { path: LOCATIONS_ROUTE, element: <LocationsListPage /> },
+      { path: LOCATION_DETAIL_ROUTE, element: <LocationDetailPage /> },
       { path: CATCH_ALL_PATH, element: <NotFoundPage /> },
     ],
   },

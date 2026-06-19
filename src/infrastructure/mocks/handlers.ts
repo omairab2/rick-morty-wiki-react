@@ -2,12 +2,15 @@ import { http, HttpResponse, type RequestHandler } from 'msw';
 
 import type { CharacterApiDto, GetCharactersResponseDto } from '@/application/dto/character.dto';
 import type { EpisodeApiDto } from '@/application/dto/episode.dto';
+import type { LocationApiDto } from '@/application/dto/location.dto';
 import { env } from '@/shared/config/env';
 
 const CHARACTER_ENDPOINT = `${env.apiBaseUrl}/character`;
 const EPISODE_ENDPOINT = `${env.apiBaseUrl}/episode`;
+const LOCATION_ENDPOINT = `${env.apiBaseUrl}/location`;
 const NOT_FOUND_CHARACTER_ID = '9999';
 const NOT_FOUND_EPISODE_ID = '9999';
+const NOT_FOUND_LOCATION_ID = '9999';
 
 const RICK: CharacterApiDto = {
   id: 1,
@@ -74,11 +77,43 @@ function buildEpisodeApiDto(id: number): EpisodeApiDto {
   };
 }
 
+function buildLocationApiDto(id: number): LocationApiDto {
+  return {
+    id,
+    name: `Location ${id}`,
+    type: 'Planet',
+    dimension: 'Dimension C-137',
+    residents: [
+      'https://rickandmortyapi.com/api/character/1',
+      'https://rickandmortyapi.com/api/character/2',
+    ],
+    url: `https://rickandmortyapi.com/api/location/${id}`,
+    created: '2017-11-10T12:42:04.162Z',
+  };
+}
+
 /** Episodes across two seasons, used by the list handler for filtering. */
 const EPISODE_LIST: EpisodeApiDto[] = [
   { ...buildEpisodeApiDto(1), name: 'Pilot', episode: 'S01E01' },
   { ...buildEpisodeApiDto(2), name: 'Lawnmower Dog', episode: 'S01E02' },
   { ...buildEpisodeApiDto(11), name: 'A Rickle in Time', episode: 'S02E01' },
+];
+
+/** Locations with varied name/type/dimension, used by the list handler. */
+const LOCATION_LIST: LocationApiDto[] = [
+  {
+    ...buildLocationApiDto(1),
+    name: 'Earth (C-137)',
+    type: 'Planet',
+    dimension: 'Dimension C-137',
+  },
+  { ...buildLocationApiDto(2), name: 'Abadango', type: 'Cluster', dimension: 'unknown' },
+  {
+    ...buildLocationApiDto(3),
+    name: 'Citadel of Ricks',
+    type: 'Space station',
+    dimension: 'unknown',
+  },
 ];
 
 /**
@@ -147,6 +182,41 @@ export const episodesByIdsHandler = http.get(`${EPISODE_ENDPOINT}/:ids`, ({ para
   return HttpResponse.json(episodes.length === 1 ? episodes[0] : episodes);
 });
 
+/** `/location` — list, filterable by `name`, `type`, and `dimension` query params. */
+export const locationsListHandler = http.get(LOCATION_ENDPOINT, ({ request }) => {
+  const url = new URL(request.url);
+  const name = (url.searchParams.get('name') ?? '').toLowerCase();
+  const type = (url.searchParams.get('type') ?? '').toLowerCase();
+  const dimension = (url.searchParams.get('dimension') ?? '').toLowerCase();
+
+  const results = LOCATION_LIST.filter(
+    (location) =>
+      location.name.toLowerCase().includes(name) &&
+      location.type.toLowerCase().includes(type) &&
+      location.dimension.toLowerCase().includes(dimension),
+  );
+
+  return HttpResponse.json({
+    info: { count: results.length, pages: results.length > 0 ? 1 : 0, next: null, prev: null },
+    results,
+  });
+});
+
+/**
+ * `/location/:ids` — single object for one id, array for several. 404 if any
+ * requested id is the reserved missing id.
+ */
+export const locationsByIdsHandler = http.get(`${LOCATION_ENDPOINT}/:ids`, ({ params }) => {
+  const ids = String(params.ids).split(',');
+  if (ids.includes(NOT_FOUND_LOCATION_ID)) {
+    return HttpResponse.json({ error: 'Location not found' }, { status: 404 });
+  }
+
+  const locations = ids.map((id) => buildLocationApiDto(Number(id)));
+
+  return HttpResponse.json(locations.length === 1 ? locations[0] : locations);
+});
+
 /**
  * Default handlers shared by the browser worker and the test server. The happy
  * paths are active by default; tests opt into the 404 list path with
@@ -157,4 +227,6 @@ export const handlers: RequestHandler[] = [
   characterByIdHandler,
   episodesListHandler,
   episodesByIdsHandler,
+  locationsListHandler,
+  locationsByIdsHandler,
 ];

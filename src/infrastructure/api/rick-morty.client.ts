@@ -9,10 +9,16 @@ import type {
   GetEpisodesRequestDto,
   GetEpisodesResponseDto,
 } from '@/application/dto/episode.dto';
+import type {
+  GetLocationsByIdsResponseDto,
+  GetLocationsListResponseDto,
+  GetLocationsRequestDto,
+} from '@/application/dto/location.dto';
 import { httpClient } from '@/infrastructure/http/http-client';
 
 const CHARACTER_RESOURCE_PATH = '/character';
 const EPISODE_RESOURCE_PATH = '/episode';
+const LOCATION_RESOURCE_PATH = '/location';
 
 /**
  * Build the `/character` query string from a request DTO, omitting any param
@@ -53,6 +59,30 @@ function buildEpisodeQuery(request: GetEpisodesRequestDto): string {
   }
   if (request.episode) {
     params.set('episode', request.episode);
+  }
+  if (request.page !== undefined) {
+    params.set('page', String(request.page));
+  }
+
+  const query = params.toString();
+
+  return query ? `?${query}` : '';
+}
+
+/**
+ * Build the `/location` query string from a request DTO.
+ */
+function buildLocationQuery(request: GetLocationsRequestDto): string {
+  const params = new URLSearchParams();
+
+  if (request.name) {
+    params.set('name', request.name);
+  }
+  if (request.type) {
+    params.set('type', request.type);
+  }
+  if (request.dimension) {
+    params.set('dimension', request.dimension);
   }
   if (request.page !== undefined) {
     params.set('page', String(request.page));
@@ -149,10 +179,48 @@ function fetchEpisodesByIds({
   });
 }
 
+export interface FetchLocationsArgs {
+  request: GetLocationsRequestDto;
+  signal?: AbortSignal;
+}
+
+/**
+ * Fetch a page of locations from the `/location` list endpoint.
+ */
+function fetchLocations({
+  request,
+  signal,
+}: FetchLocationsArgs): Promise<GetLocationsListResponseDto> {
+  const path = `${LOCATION_RESOURCE_PATH}${buildLocationQuery(request)}`;
+
+  return httpClient.get<GetLocationsListResponseDto>({ path, signal });
+}
+
+export interface FetchLocationsByIdsArgs {
+  ids: number[];
+  signal?: AbortSignal;
+}
+
+/**
+ * Fetch locations by id (`/location/:ids`). Single object for one id, array for
+ * several; the DTO layer normalizes that.
+ */
+function fetchLocationsByIds({
+  ids,
+  signal,
+}: FetchLocationsByIdsArgs): Promise<GetLocationsByIdsResponseDto> {
+  return httpClient.get<GetLocationsByIdsResponseDto>({
+    path: `${LOCATION_RESOURCE_PATH}/${ids.join(',')}`,
+    signal,
+  });
+}
+
 export const rickMortyClient = {
   fetchCharacters,
   fetchCharacterById,
   fetchCharactersByIds,
   fetchEpisodes,
   fetchEpisodesByIds,
+  fetchLocations,
+  fetchLocationsByIds,
 };
