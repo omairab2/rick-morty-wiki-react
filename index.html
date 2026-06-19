@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rick &amp; Morty Wiki</title>
+    <meta
+      name="description"
+      content="Browse, search, and filter the characters, episodes, and locations of the Rick and Morty multiverse."
+    />
+    <!-- The app fetches data and images from the Rick and Morty API; warm the
+         connection early to shave latency off the LCP image. -->
+    <link rel="preconnect" href="https://rickandmortyapi.com" crossorigin />
+    <link rel="dns-prefetch" href="https://rickandmortyapi.com" />
   </head>
   <body>
     <div id="root"></div>
