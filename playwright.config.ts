@@ -1,10 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Local dev base URL. The Vite dev server is pinned to port 3000 in
- * `vite.config.ts`, so the E2E suite targets the same port.
+ * The E2E suite runs its own dev server on a dedicated port (not the 3000 used
+ * by `pnpm dev`). This keeps E2E decoupled from a developer's running dev
+ * server: Playwright never reuses it, and always boots its own MSW-mocked
+ * instance for deterministic runs.
  */
-const BASE_URL = 'http://localhost:3000';
+const E2E_PORT = 3100;
+const BASE_URL = `http://localhost:${E2E_PORT}`;
 
 const WEB_SERVER_TIMEOUT_MS = 120_000;
 const EXPECT_TIMEOUT_MS = 10_000;
@@ -30,8 +33,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
+    command: `pnpm dev --port ${E2E_PORT}`,
     url: BASE_URL,
+    // Safe to reuse: only the E2E server (MSW-enabled) ever lives on E2E_PORT,
+    // so this never picks up a developer's `pnpm dev` running on 3000.
     reuseExistingServer: true,
     timeout: WEB_SERVER_TIMEOUT_MS,
     // Run the dev server against the MSW mocks (not the live API) so the suite
