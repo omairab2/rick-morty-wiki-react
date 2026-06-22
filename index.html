@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Updated at runtime (and by the no-flash script below) to match the active theme. -->
+    <meta name="theme-color" content="#ffffff" />
     <title>Rick &amp; Morty Wiki</title>
     <meta
       name="description"
@@ -12,6 +14,25 @@
          connection early to shave latency off the LCP image. -->
     <link rel="preconnect" href="https://rickandmortyapi.com" crossorigin />
     <link rel="dns-prefetch" href="https://rickandmortyapi.com" />
+    <!-- Apply the persisted (or system) theme before first paint to avoid a flash
+         of the wrong theme. Mirrors src/presentation/theme/theme-provider.tsx. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('rick-morty-theme');
+          var theme =
+            stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system';
+          var isDark =
+            theme === 'dark' ||
+            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          root.classList.toggle('dark', isDark);
+          root.style.colorScheme = isDark ? 'dark' : 'light';
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', isDark ? '#0a0a0a' : '#ffffff');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

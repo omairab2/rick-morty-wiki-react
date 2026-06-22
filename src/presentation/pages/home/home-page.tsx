@@ -20,7 +20,7 @@ import { buildCharacterDetailPath } from '@/presentation/routes/paths';
 const FIRST_PAGE = 1;
 const SEARCH_DEBOUNCE_MS = 400;
 const SKELETON_COUNT = 8;
-const GRID_CLASSES = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+const GRID_CLASSES = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4';
 
 function LoadingGrid() {
   return (

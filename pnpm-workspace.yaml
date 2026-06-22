@@ -1,2 +1,7 @@
+# pnpm build-script approvals (pnpm 11+ records pending entries here). `sharp` is
+# pulled in transitively by `geist`, but the app only consumes Geist's font files
+# via CSS @font-face — the package's JS (and sharp) is never imported — so sharp's
+# native build is intentionally skipped.
 allowBuilds:
   msw: true
+  sharp: false

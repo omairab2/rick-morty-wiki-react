@@ -3,6 +3,7 @@ import { Suspense, useEffect, useRef } from 'react';
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
 import { NavLink, Outlet, useLocation } from 'react-router';
 
+import { ModeToggle } from '@/presentation/components/mode-toggle';
 import { AppPath } from '@/presentation/routes/paths';
 import { cn } from '@/shared/lib/utils';
 
@@ -49,7 +50,7 @@ export function RootLayout() {
           Skip to main content
         </a>
 
-        <header className="border-b">
+        <header className="bg-background/70 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b backdrop-blur">
           <nav
             className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-4 text-sm"
             aria-label="Main"
@@ -72,6 +73,9 @@ export function RootLayout() {
                 </NavLink>
               ))}
             </div>
+            <div className="ml-auto">
+              <ModeToggle />
+            </div>
           </nav>
         </header>
 
@@ -87,7 +91,12 @@ export function RootLayout() {
               </div>
             }
           >
-            <Outlet />
+            <div
+              key={pathname}
+              className="animate-in fade-in-0 duration-300 motion-reduce:animate-none"
+            >
+              <Outlet />
+            </div>
           </Suspense>
         </div>
       </div>

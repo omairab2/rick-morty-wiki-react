@@ -4,7 +4,7 @@ import { CharacterCard } from '@/presentation/components/character/character-car
 import { Badge } from '@/presentation/components/ui/badge';
 import { Separator } from '@/presentation/components/ui/separator';
 
-const GRID_CLASSES = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+const GRID_CLASSES = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4';
 
 interface LocationDetailViewProps {
   location: Location;

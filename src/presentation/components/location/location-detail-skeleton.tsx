@@ -2,7 +2,7 @@ import { Separator } from '@/presentation/components/ui/separator';
 import { Skeleton } from '@/presentation/components/ui/skeleton';
 
 const RESIDENT_SKELETON_COUNT = 8;
-const GRID_CLASSES = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+const GRID_CLASSES = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4';
 
 /**
  * Loading placeholder that mirrors the location detail layout: the location
