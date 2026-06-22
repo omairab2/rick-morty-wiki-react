@@ -30,8 +30,8 @@ describe('CharacterCard', () => {
     expect(screen.getByText('Human')).toBeInTheDocument();
     expect(screen.getByText('Earth (C-137)')).toBeInTheDocument();
     expect(screen.getByText('Alive')).toBeInTheDocument();
-    expect(screen.getByText('Species:')).toBeInTheDocument();
-    expect(screen.getByText('Origin:')).toBeInTheDocument();
+    expect(screen.getByText('Species')).toBeInTheDocument();
+    expect(screen.getByText('Origin')).toBeInTheDocument();
   });
 
   it('exposes the full name as a title tooltip so long names are recoverable', () => {

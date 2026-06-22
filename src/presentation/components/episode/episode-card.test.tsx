@@ -20,4 +20,12 @@ describe('EpisodeCard', () => {
     expect(screen.getByText('Pilot')).toBeInTheDocument();
     expect(screen.getByText('December 2, 2013')).toBeInTheDocument();
   });
+
+  it('shows the season and featured character count', () => {
+    render(<EpisodeCard episode={EPISODE} />);
+
+    expect(screen.getByText('Season 1')).toBeInTheDocument();
+    expect(screen.getByText('Featured Characters')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
 });

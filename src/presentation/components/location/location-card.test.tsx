@@ -20,4 +20,11 @@ describe('LocationCard', () => {
     expect(screen.getByText('Planet')).toBeInTheDocument();
     expect(screen.getByText('Dimension C-137')).toBeInTheDocument();
   });
+
+  it('shows the resident count', () => {
+    render(<LocationCard location={LOCATION} />);
+
+    expect(screen.getByText('Residents')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
 });

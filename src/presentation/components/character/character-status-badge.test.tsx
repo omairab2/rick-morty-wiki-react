@@ -11,10 +11,10 @@ describe('CharacterStatusBadge', () => {
     expect(screen.getByText('Alive')).toBeInTheDocument();
   });
 
-  it('uses green styling for alive characters', () => {
+  it('uses emerald styling for alive characters', () => {
     render(<CharacterStatusBadge status={CharacterStatus.Alive} />);
 
-    expect(screen.getByText('Alive').className).toContain('green');
+    expect(screen.getByText('Alive').className).toContain('emerald');
   });
 
   it('uses red styling for dead characters', () => {
