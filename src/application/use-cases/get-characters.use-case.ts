@@ -10,6 +10,11 @@ const FIRST_PAGE = 1;
  * Clamp any page value to a valid 1-based integer. Invalid inputs — `0`,
  * negatives, fractionals, `NaN`, `Infinity`, `undefined` — fall back to the
  * first page.
+ *
+ * Why sanitize here: `page` originates from the URL (`?page=`, via nuqs), which
+ * a user can edit to anything, and the API answers `404` for out-of-range pages.
+ * Guarding at the application boundary means every caller is protected at once,
+ * so no presentation code has to defend against a malformed page value.
  */
 function normalizePage(page: number | undefined): number {
   if (page === undefined || !Number.isFinite(page)) {

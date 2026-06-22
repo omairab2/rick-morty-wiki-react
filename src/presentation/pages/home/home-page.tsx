@@ -62,9 +62,12 @@ export function HomePage() {
   const [searchInput, setSearchInput] = useState(name);
   const lastWrittenName = useRef(name);
 
-  // Debounce the search box → URL, resetting to the first page, after the user
-  // stops typing. Keying the query off the URL `name` means the request is
-  // debounced too (not fired on every keystroke).
+  // Why a local `searchInput` instead of binding the box straight to nuqs:
+  // writing every keystroke to the URL would push a history entry (and fire a
+  // request) per character. Local state holds the in-progress text and commits
+  // it to the URL once the user pauses — resetting to the first page so a
+  // narrower result set never strands the user on an out-of-range page. Keying
+  // the query off the URL `name` means the request is debounced for free.
   useEffect(() => {
     if (searchInput === name) {
       return;

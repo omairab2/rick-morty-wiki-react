@@ -28,6 +28,8 @@ Flow: component → use-*.hook → use-case.execute() → repository port → im
 4. presentation: `use-*.hook.ts` (wires use case + repo into `useQuery`), component/page, register route in `router.tsx` + `paths.ts`.
 5. tests: co-located `*.test.ts(x)`, MSW handler in `mocks/handlers.ts`, `e2e/*.spec.ts` for new flows.
 
+Exact creation order for a `Vehicles` resource: `vehicle.entity.ts` → `vehicle.repository.ts` (port) → `vehicle.dto.ts` → `get-vehicles.use-case.ts` (+ `get-vehicle-detail`) → client `fetchVehicles` → `vehicle.mapper.ts` → `vehicle.repository.impl.ts` → MSW handler → `use-vehicles.hook.ts` (+ `use-vehicle-detail.hook.ts`) → `components/vehicle/*` → `pages/vehicles/vehicles-list.page.tsx` (+ `vehicle-detail/`) → `routes/paths.ts` + `router.tsx` → tests + `e2e/vehicles.spec.ts`.
+
 ## Naming
 
 - Files: kebab-case + role suffix: `.entity.ts`, `.repository.ts`, `.repository.impl.ts`, `.use-case.ts`, `.dto.ts`, `.mapper.ts`, `.client.ts`, `use-*.hook.ts`, `.page.tsx`, `.helper.ts`, `.error.ts`. Tests `*.test.ts(x)`; E2E `e2e/*.spec.ts`.
@@ -39,10 +41,18 @@ Flow: component → use-*.hook → use-case.execute() → repository port → im
 
 `pnpm dev` (3000) · `build` · `preview` · `test` / `test:run` / `test:coverage` / `test:ui` · `test:e2e` / `test:e2e:ui` · `lint` / `lint:fix` · `format` / `format:fix` · `type:check`. Env vars `VITE_`-prefixed via `shared/config/env.ts`; `VITE_ENABLE_MSW=true` enables MSW in dev.
 
+## Decisions (ADRs in docs/decisions/)
+
+001 stack (Vite · TanStack Query · layered Clean Arch · shadcn/ui · nuqs) · 002 lazy route splitting · 003 `HttpError` in `shared/`. Check the ADR before changing a cross-cutting choice.
+
 ## Do NOT
 
-- No importing `infrastructure/*` from components/pages — UI gets data via `presentation/hooks/*` only; never call the API client / `httpClient` from UI.
-- No outward dependencies; no skipping layers (always hook → use-case → port → impl → client).
+- No importing `infrastructure/*` from `presentation` (components/pages/layouts/routes) — the composition root is `presentation/hooks/*`, the only place allowed to; everything else uses hooks. Never call the API client / `httpClient` from UI.
+- No skipping layers (always hook → use-case → repository port → impl → client); no outward dependencies.
+- No defining/importing `HttpError` outside `shared/` — it lives only in `@/shared/errors/http.error` (infra throws it, presentation reads `.status`); don't move it to `infrastructure/`.
 - No business logic in components (fetching, DTO→entity mapping, pagination/filter logic → use cases, mappers, repositories).
+- No `useState` for state that belongs in the URL — filters/search/pagination go through nuqs (`useQueryState`); `useState` only for transient input.
+- No repository importing another repository — expose cross-domain data on a port (e.g. `getEpisodesByIds`).
+- No hardcoding API strings (paths, query-param keys) in components — they live in `rick-morty.client.ts` + DTOs.
 - No relative imports, no `any`, no magic values, no positional multi-arg functions.
 - Don't drop the abort `signal`, add a second `fetch` site, or put Vitest tests in `e2e/`. Mock with MSW, not by stubbing `fetch`. English only.

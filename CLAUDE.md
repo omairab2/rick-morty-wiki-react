@@ -5,8 +5,9 @@ Architecture**. Data comes from the public [Rick and Morty API](https://rickandm
 Live demo: https://rick-morty-wiki-react.vercel.app/
 
 > Read this before writing code. It is the source of truth for architecture and
-> conventions. See also [README.md](README.md) (features) and
-> [CONTRIBUTING.md](CONTRIBUTING.md).
+> conventions. See also [README.md](README.md) (features),
+> [CONTRIBUTING.md](CONTRIBUTING.md), and the ADRs in
+> [`docs/decisions/`](docs/decisions/).
 
 ## Stack
 
@@ -128,6 +129,51 @@ Always build inward-out. Example: adding a new filter, endpoint, or entity.
    handler in `infrastructure/mocks/handlers.ts`; add an `e2e/*.spec.ts` for a new
    user-facing flow.
 
+### Worked example — adding a `Vehicles` resource
+
+Build strictly inward-out. Each step lists the **exact files to create** and what
+they export, mirroring the existing `Characters` feature. (`Vehicles` is
+illustrative — the public API has no such endpoint.)
+
+**1. `core` — model the domain (no implementations):**
+
+| Order | File                                                 | Exports                                                                                               |
+| ----- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1     | `src/core/domain/entities/vehicle.entity.ts`         | `Vehicle` entity (+ any value-object enum, e.g. `VehicleKind`)                                        |
+| 2     | `src/core/domain/repositories/vehicle.repository.ts` | port `VehicleRepository` + `VehicleFilters`, `VehiclePage`, `GetVehiclesQuery`, `GetVehicleByIdQuery` |
+
+**2. `application` — orchestrate against the port:**
+
+| Order | File                                                       | Exports                                                                                            |
+| ----- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 3     | `src/application/dto/vehicle.dto.ts`                       | `GetVehiclesRequestDto`, `VehicleApiDto`, `GetVehiclesResponseDto` (+ `normalizeVehiclesResponse`) |
+| 4     | `src/application/use-cases/get-vehicles.use-case.ts`       | `createGetVehiclesUseCase({ repository }) → { execute }` (normalizes page/filters)                 |
+| 5     | `src/application/use-cases/get-vehicle-detail.use-case.ts` | `createGetVehicleDetailUseCase({ repository })`                                                    |
+
+**3. `infrastructure` — implement the port, talk to the API:**
+
+| Order | File                                                         | Change                                                                            |
+| ----- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| 6     | `src/infrastructure/api/rick-morty.client.ts` _(edit)_       | add `fetchVehicles` / `fetchVehicleById` (build query string, return the raw DTO) |
+| 7     | `src/infrastructure/mappers/vehicle.mapper.ts`               | `mapVehicle` (DTO→entity) + `mapVehiclePage`                                      |
+| 8     | `src/infrastructure/repositories/vehicle.repository.impl.ts` | `createVehicleRepository()` (call client → map → return; list `404` → empty page) |
+| 9     | `src/infrastructure/mocks/handlers.ts` _(edit)_              | add `/vehicle` MSW handlers                                                       |
+
+**4. `presentation` — wire it to React (composition root = the hook):**
+
+| Order | File                                                            | Exports / change                                                                                                                                                                    |
+| ----- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10    | `src/presentation/hooks/use-vehicles.hook.ts`                   | `useVehicles({ page, filters })` — wires `createGetVehiclesUseCase({ repository: createVehicleRepository() })` into `useQuery` (**only place presentation imports infrastructure**) |
+| 11    | `src/presentation/hooks/use-vehicle-detail.hook.ts`             | `useVehicleDetail({ id })` (`throwOnError: true`)                                                                                                                                   |
+| 12    | `src/presentation/components/vehicle/*`                         | `vehicle-card.tsx`, `vehicle-card-skeleton.tsx`, `vehicle-filters.tsx`, `vehicle-detail-view.tsx`, `vehicle-detail-skeleton.tsx`                                                    |
+| 13    | `src/presentation/pages/vehicles/vehicles-list.page.tsx`        | `VehiclesListPage`                                                                                                                                                                  |
+| 14    | `src/presentation/pages/vehicle-detail/vehicle-detail.page.tsx` | `VehicleDetailPage`                                                                                                                                                                 |
+| 15    | `src/presentation/routes/paths.ts` _(edit)_                     | add `AppPath` entries + a `buildVehicleDetailPath` builder                                                                                                                          |
+| 16    | `src/presentation/routes/router.tsx` _(edit)_                   | register the two `lazy(() => import(...))` routes                                                                                                                                   |
+
+**5. tests** — co-locate a `*.test.ts(x)` beside every file above, extend the MSW
+suite, and add `e2e/vehicles.spec.ts` for the list → detail flow.
+
 ## Conventions
 
 ### File & folder naming (kebab-case, role suffix)
@@ -164,6 +210,7 @@ Always build inward-out. Example: adding a new filter, endpoint, or entity.
   `httpClient.get({ path, signal })`). Exceptions: React event handlers, array
   callbacks, third-party callbacks.
 - **Docs:** exported functions and interfaces carry JSDoc — match that density.
+  Comments explain **why**, not what.
 - **Language:** English only (code, names, comments).
 
 ### Testing
@@ -196,24 +243,54 @@ Always build inward-out. Example: adding a new filter, endpoint, or entity.
 
 Environment variables are `VITE_`-prefixed and read **only** through
 `shared/config/env.ts`. `VITE_ENABLE_MSW=true` turns on MSW in dev (the Playwright
-E2E webServer uses it for deterministic runs).
+E2E webServer uses it for deterministic runs). See `.env.example`.
+
+## Architecture decisions quick reference
+
+One line per recorded decision; full context in [`docs/decisions/`](docs/decisions/).
+Read the relevant ADR before reversing a cross-cutting choice.
+
+| Decision                        | Why                                                           | ADR                                                     |
+| ------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| Vite (build + dev server)       | Pure SPA — no SSR; instant HMR; code-split build, zero config | [001](docs/decisions/001-architecture-decisions.md)     |
+| TanStack Query for server state | Cache/dedupe/retries out of the box; server state ≠ UI state  | [001](docs/decisions/001-architecture-decisions.md)     |
+| Clean Architecture in layers    | Clear boundaries; domain testable without React or `fetch`    | [001](docs/decisions/001-architecture-decisions.md)     |
+| shadcn/ui + Tailwind 4 + Radix  | Own the component code; Radix a11y; no runtime lock-in        | [001](docs/decisions/001-architecture-decisions.md)     |
+| nuqs for URL state              | Permalinkable filters; survives refresh and back/forward      | [001](docs/decisions/001-architecture-decisions.md)     |
+| Lazy route splitting            | Smaller initial chunk; each route is its own on-demand chunk  | [002](docs/decisions/002-lazy-route-splitting.md)       |
+| `HttpError` in `shared/`        | Removes the only `presentation → infrastructure` coupling     | [003](docs/decisions/003-http-error-in-shared-layer.md) |
 
 ## What NOT to do
 
-- ❌ **Import `infrastructure/*` from components or pages.** Components and pages
-  get data through `presentation/hooks/*` (the composition root) — never
-  instantiate a repository or call the API client / `httpClient` from the UI.
-- ❌ **Point dependencies outward.** `core` imports nothing but `shared`;
-  `application` never imports `infrastructure`; nothing imports `presentation`.
-- ❌ **Skip a layer.** Don't call `rickMortyClient`/`httpClient` from a use case,
-  and don't call a repository impl directly from a component. Always go
-  hook → use-case → repository **port** → impl → client.
-- ❌ **Put business logic in components** (fetching, DTO→entity mapping, pagination
-  math, filter normalization). That belongs in use cases, mappers, and
+- ❌ **Import `infrastructure/*` from `presentation`** (components, pages, layouts,
+  routes). The composition root is `presentation/hooks/*` — the ONLY place that may
+  import a repository impl or the API client. Everything else gets data through hooks.
+- ❌ **Skip a layer.** Always go hook → use-case → repository **port** → impl →
+  client. Don't call `rickMortyClient`/`httpClient` from a use case, and don't call
+  a repository impl directly from a component.
+- ❌ **Point dependencies outward.** `core` imports only `shared`; `application`
+  never imports `infrastructure`; nothing imports `presentation`.
+- ❌ **Define or import `HttpError` outside `shared/`.** It lives only in
+  `@/shared/errors/http.error` (infra throws it, presentation reads `.status`).
+  Don't move it into `infrastructure/` or re-export it — that reintroduces the
+  cross-layer coupling [ADR 003](docs/decisions/003-http-error-in-shared-layer.md)
+  removed.
+- ❌ **Put business logic in React components** — data fetching, DTO→entity mapping,
+  pagination math, filter normalization. That belongs in use cases, mappers, and
   repositories. Components render and wire hooks.
-- ❌ **Use relative imports** (`../../`). Use `@/...`.
-- ❌ **Use `any`, magic values, or positional multi-arg functions.**
-- ❌ **Drop the abort `signal`** somewhere along the hook → fetch chain.
-- ❌ **Put Vitest tests in `e2e/`** or stub `fetch` directly in tests (use MSW).
-- ❌ **Add a second path alias** or a second `fetch` site — the only `fetch` lives
-  in `infrastructure/http/http-client.ts`.
+- ❌ **Use `useState` for state that belongs in the URL.** Filters, search, and
+  pagination live in the URL via nuqs (`useQueryState`); `useState` would break
+  shareable links, refresh, and back/forward. (Local `useState` is fine only for
+  transient input — e.g. the search box text before it is debounced into the URL.)
+- ❌ **Make a repository import another repository.** Each impl implements one port
+  and talks only to the client + mappers. Expose cross-domain data on a port
+  (e.g. `CharacterRepository.getEpisodesByIds`) instead of importing
+  `episode.repository.impl` from `character.repository.impl`.
+- ❌ **Hardcode API strings in components.** Resource paths (`/character`) and
+  query-param keys live in `rick-morty.client.ts` and the DTOs. Components never
+  build API URLs or know endpoint shapes — they call hooks.
+- ❌ **Use relative imports** (`../../`) — use `@/...`. No `any`, no magic values,
+  no positional multi-arg functions (pass a single destructured object).
+- ❌ **Drop the abort `signal`** along the hook → fetch chain; **add a second
+  `fetch` site** (the only one is `infrastructure/http/http-client.ts`); or **put
+  Vitest tests in `e2e/`** / stub `fetch` instead of using MSW.

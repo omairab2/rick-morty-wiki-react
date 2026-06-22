@@ -61,8 +61,13 @@ function toRequestDto({ page, filters }: ToRequestDtoArgs): GetCharactersRequest
 }
 
 /**
- * Concrete {@link CharacterRepository} backed by the Rick & Morty API. Forwards
- * the abort `signal` end-to-end so TanStack Query can cancel in-flight requests.
+ * Concrete {@link CharacterRepository} backed by the Rick & Morty API.
+ *
+ * Why forward `signal` end-to-end (query → use case → repo → client → `fetch`):
+ * when the user pages or retypes a filter quickly, TanStack Query aborts the
+ * superseded request through this signal. Without it, a slow stale response
+ * could resolve after a newer one and clobber the UI with outdated data.
+ *
  * HTTP errors (e.g. a 404 from `/character/:id`) propagate unchanged.
  */
 export function createCharacterRepository(): CharacterRepository {

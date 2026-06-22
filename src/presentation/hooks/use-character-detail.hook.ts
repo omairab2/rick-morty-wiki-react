@@ -14,9 +14,13 @@ export interface UseCharacterDetailParams {
 }
 
 /**
- * Presentation hook for the character detail. `throwOnError: true` lets errors
- * bubble to the nearest error boundary instead of being handled inline in the
- * component, keeping the page focused on the loading/success states.
+ * Presentation hook for the character detail.
+ *
+ * Why `throwOnError: true`: the detail route is wrapped in a QueryErrorBoundary
+ * that renders a 404 not-found state vs a generic error state (it inspects
+ * `HttpError.status`). Throwing routes failures to that boundary, so the page
+ * component only handles loading/success — unlike the list (HomePage), which has
+ * no 404-vs-error distinction to make and renders its own `ErrorState` inline.
  */
 export function useCharacterDetail({ id }: UseCharacterDetailParams) {
   const useCase = useMemo(
