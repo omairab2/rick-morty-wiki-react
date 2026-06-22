@@ -1,0 +1,48 @@
+# Rick & Morty Wiki — Cursor rules
+
+React 19 + TypeScript SPA, Clean Architecture, consuming the public Rick and Morty
+API. Be concise and follow these rules.
+
+## Stack
+
+React 19 · TS 6 · Vite 8 (dev port 3000) · shadcn/ui · Tailwind 4 · Radix ·
+TanStack Query 5 · React Router 7 (lazy) · nuqs 2 (URL state) · RHF + zod.
+Tests: Vitest 4 + Testing Library + MSW 2 + vitest-axe; Playwright (Chromium).
+Package manager: pnpm. Deploy: Vercel.
+
+## Layers (dependencies point INWARD only)
+
+- `core/` — domain: `domain/entities/*.entity.ts`, `domain/repositories/*.repository.ts` (ports/interfaces, no impls), `errors/`. Imports `shared` only.
+- `application/` — `use-cases/*.use-case.ts` (factory fns `createXUseCase({ repository }) → { execute }`), `dto/*.dto.ts` (API shapes). Imports `core` only.
+- `infrastructure/` — `api/*.client.ts`, `http/http-client.ts` (the only `fetch`, throws `HttpError`), `mappers/*.mapper.ts` (DTO→entity), `repositories/*.repository.impl.ts` (`createXRepository()`), `mocks/` (MSW), `query/query-client.ts`. Imports `core` + `application`.
+- `presentation/` — `hooks/use-*.hook.ts` = composition root (wire `createXUseCase({ repository: createXRepository() })` into `useQuery`; ONLY place that imports `infrastructure`), `components/` (+ `ui/` shadcn), `pages/*/*.page.tsx`, `layouts/`, `routes/`, `app/`. Imports `application` + `core`.
+- `shared/` — `config/env.ts`, `errors/http.error.ts`, `lib/utils.ts` (`cn()`). Importable by anyone; imports nothing internal.
+
+Flow: component → use-*.hook → use-case.execute() → repository port → impl → client → http-client (fetch) → mapper → entity. Forward the TanStack `signal` end-to-end.
+
+## Add a feature: core → application → infrastructure → presentation
+
+1. core: extend entity + repository port (types/signatures only).
+2. application: use-case factory + request/response DTO.
+3. infrastructure: client method + mapper + implement the port (404 on list = empty page).
+4. presentation: `use-*.hook.ts` (wires use case + repo into `useQuery`), component/page, register route in `router.tsx` + `paths.ts`.
+5. tests: co-located `*.test.ts(x)`, MSW handler in `mocks/handlers.ts`, `e2e/*.spec.ts` for new flows.
+
+## Naming
+
+- Files: kebab-case + role suffix: `.entity.ts`, `.repository.ts`, `.repository.impl.ts`, `.use-case.ts`, `.dto.ts`, `.mapper.ts`, `.client.ts`, `use-*.hook.ts`, `.page.tsx`, `.helper.ts`, `.error.ts`. Tests `*.test.ts(x)`; E2E `e2e/*.spec.ts`.
+- Interfaces/types: PascalCase, NO `I` prefix. Enums: `PascalCase.Member`. Functions: camelCase; factories `createX…`. Constants: UPPER_SNAKE_CASE named by meaning, not value.
+- Imports: only `@/` → `src/`; never relative `../../`.
+- Functions with >1 arg take a single destructured object param.
+
+## Commands (pnpm)
+
+`pnpm dev` (3000) · `build` · `preview` · `test` / `test:run` / `test:coverage` / `test:ui` · `test:e2e` / `test:e2e:ui` · `lint` / `lint:fix` · `format` / `format:fix` · `type:check`. Env vars `VITE_`-prefixed via `shared/config/env.ts`; `VITE_ENABLE_MSW=true` enables MSW in dev.
+
+## Do NOT
+
+- No importing `infrastructure/*` from components/pages — UI gets data via `presentation/hooks/*` only; never call the API client / `httpClient` from UI.
+- No outward dependencies; no skipping layers (always hook → use-case → port → impl → client).
+- No business logic in components (fetching, DTO→entity mapping, pagination/filter logic → use cases, mappers, repositories).
+- No relative imports, no `any`, no magic values, no positional multi-arg functions.
+- Don't drop the abort `signal`, add a second `fetch` site, or put Vitest tests in `e2e/`. Mock with MSW, not by stubbing `fetch`. English only.
